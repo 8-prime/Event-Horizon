@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"path/filepath"
 
 	"github.com/google/uuid"
 	"github.com/hpcloud/tail"
@@ -10,12 +11,13 @@ import (
 
 type FileUpdate struct {
 	Id   string `json:"id"`
-	Line string `json:line"`
+	Line string `json:"line"`
 }
 
 type WatchInfo struct {
 	Id       string `json:"id"`
 	FilePath string `json:"filePath"`
+	FileName string `json:"fileName"`
 }
 
 type WatchedFile struct {
@@ -28,6 +30,7 @@ func (w *WatchedFile) GetInfo() WatchInfo {
 	return WatchInfo{
 		Id:       w.Id,
 		FilePath: w.FilePath,
+		FileName: filepath.Base(w.FilePath),
 	}
 }
 
@@ -64,40 +67,36 @@ func (a *App) SelectFile() (WatchInfo, error) {
 		return watched.GetInfo(), err
 	}
 
+	go startTailing(&watched, a.ctx)
 	return watched.GetInfo(), nil
 }
 
 // StartTailing begins tailing the selected file
-func StartTailing(watched *WatchedFile, ctx context.Context) error {
+func startTailing(watched *WatchedFile, ctx context.Context) {
+	t, err := tail.TailFile(watched.FilePath, tail.Config{
+		Follow: true,
+		Poll:   true,
+	})
+	defer t.Stop()
+	if err != nil {
+		runtime.EventsEmit(ctx, "tail-error", err.Error())
+	}
 
-	go func() {
-		t, err := tail.TailFile(watched.FilePath, tail.Config{
-			Follow: true,
-			Poll:   true,
-		})
-		defer t.Stop()
-		if err != nil {
-			runtime.EventsEmit(ctx, "tail-error", err.Error())
-		}
-
-		for {
-			select {
-			case <-ctx.Done():
-				runtime.EventsEmit(ctx, "tail-stopped", watched.Id) //Verify that viewing has stopped
-				return
-			case line := <-t.Lines:
-				if line.Err == nil {
-					runtime.EventsEmit(ctx, "read-error", watched.Id) //Show toast that reading for file had error
-				}
-				runtime.EventsEmit(ctx, "file-update", FileUpdate{
-					Id:   watched.Id,
-					Line: line.Text,
-				})
+	for {
+		select {
+		case <-ctx.Done():
+			runtime.EventsEmit(ctx, "tail-stopped", watched.Id) //Verify that viewing has stopped
+			return
+		case line := <-t.Lines:
+			if line.Err == nil {
+				runtime.EventsEmit(ctx, "read-error", watched.Id) //Show toast that reading for file had error
 			}
+			runtime.EventsEmit(ctx, "file-update", FileUpdate{
+				Id:   watched.Id,
+				Line: line.Text,
+			})
 		}
-	}()
-
-	return nil
+	}
 }
 
 // StopTailing stops the current file tailing operation

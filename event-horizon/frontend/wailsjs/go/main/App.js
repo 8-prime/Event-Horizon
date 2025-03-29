@@ -6,10 +6,6 @@ export function SelectFile() {
   return window['go']['main']['App']['SelectFile']();
 }
 
-export function StartTailing() {
-  return window['go']['main']['App']['StartTailing']();
-}
-
-export function StopTailing() {
-  return window['go']['main']['App']['StopTailing']();
+export function StopTailing(arg1) {
+  return window['go']['main']['App']['StopTailing'](arg1);
 }

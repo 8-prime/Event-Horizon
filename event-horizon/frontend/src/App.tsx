@@ -1,37 +1,37 @@
-import { useEffect, useReducer, useState } from 'react';
-import { SelectFile, StartTailing, StopTailing } from "../wailsjs/go/main/App";
-import { EventsOn } from "../wailsjs/runtime"
+import { useEffect, useState } from 'react';
+import { SelectFile, StopTailing } from "../wailsjs/go/main/App";
+import { EventsOn } from "../wailsjs/runtime";
 import { Button } from './components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './components/ui/table';
 import { Badge } from './components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
-import { FileText, Upload } from 'lucide-react';
-import { Input } from './components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
+import { FileText, Upload, X } from 'lucide-react';
+import { FileUpdate, FileWatch } from './models/filewatch';
 
 function App() {
-  const [files, setFiles] = useState<string[]>([])
-  const [lines, setLines] = useState<string[]>([])
+  const [watchedFiles, setWatchedFiles] = useState<FileWatch[]>([])
   const [activeTab, setActiveTab] = useState<string>("");
 
-  const [fileSelected, setFileSelected] = useState<boolean>(false)
-
   const selectFile = () => {
-    SelectFile().then(() => {
-      setFileSelected(true)
-      StartTailing()
+    SelectFile()
+  }
+
+  const removeFile = (id: string) => {
+    StopTailing(id).then(() => {
+      //remove tailed file after succesfully removing
+      setWatchedFiles(watchedFiles.filter(f => f.info.id != id))
     })
   }
 
   useEffect(() => {
-    EventsOn('file-update', (line: string) => {
-      setLines(prev => [line, ...prev])
+    EventsOn('file-update', (line: FileUpdate) => {
+      const wI = watchedFiles.find(f => f.info.id == line.id)
+      if (wI) {
+        wI.lines.push(line.line)
+      }
     })
     EventsOn('tail-stopped', (file: string) => {
       console.log("Stopped watching file: " + file);
-
-      setFileSelected(false)
     })
   }, [])
 
@@ -48,29 +48,29 @@ function App() {
           </div>
         </div>
 
-        {files.length > 0 ? (
+        {watchedFiles.length > 0 ? (
           <Tabs
             value={activeTab || undefined}
             onValueChange={setActiveTab}
             className="w-full h-[calc(100vh-80px)] flex flex-col"
           >
-            <div className="flex items-center border rounded-lg overflow-x-auto">
+            <div className="flex items-start border rounded-lg overflow-x-auto">
               <TabsList className="flex-grow bg-transparent h-auto p-1">
-                {files.map((file) => (
+                {watchedFiles.map((watchedFile) => (
                   <TabsTrigger
-                    key={file.id}
-                    value={file.id}
+                    key={watchedFile.info.id}
+                    value={watchedFile.info.id}
                     className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
                     <FileText size={14} />
-                    <span className="truncate max-w-[150px]">{file.name}</span>
+                    <span className="truncate max-w-[150px]">{watchedFile.info.fileName}</span>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-5 w-5 rounded-full ml-1"
                       onClick={(e) => {
                         e.stopPropagation()
-                        removeFile(file.id)
+                        removeFile(watchedFile.info.id)
                       }}
                     >
                       <X size={12} />
@@ -81,41 +81,21 @@ function App() {
               </TabsList>
             </div>
 
-            {files.map((file) => (
-              <TabsContent key={file.id} value={file.id} className="mt-4 flex-1 flex flex-col overflow-hidden">
+            {watchedFiles.map((watchedFile) => (
+              <TabsContent key={watchedFile.info.id} value={watchedFile.info.id} className="mt-4 flex-1 flex flex-col overflow-hidden">
                 <div className="flex flex-col h-full">
-                  {/* Fixed height top section with summary and charts */}
-                  <div className="flex flex-col space-y-4">
-                    {/* Log Level Summary */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                      {logCountsByLevel.map((item) => (
-                        <Card key={item.level}>
-                          <CardHeader className="py-2 px-4">
-                            <CardTitle className="text-sm font-medium flex items-center gap-2">
-                              <Badge className={getLevelBadgeColor(item.level)}>{item.level}</Badge>
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="py-1 px-4">
-                            <div className="text-xl font-bold">{item.count}</div>
-                            <p className="text-xs text-muted-foreground">log entries</p>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-
                   {/* Search and filter controls */}
                   <div className="flex flex-col sm:flex-row gap-4 my-4">
                     <div className="flex-1">
-                      <Input
+                      {/* <Input
                         placeholder="Search logs..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full"
-                      />
+                      /> */}
                     </div>
                     <div className="flex gap-2">
-                      <Select value={levelFilter || ""} onValueChange={(value) => setLevelFilter(value || null)}>
+                      {/* <Select value={levelFilter || ""} onValueChange={(value) => setLevelFilter(value || null)}>
                         <SelectTrigger className="w-[150px]">
                           <SelectValue placeholder="Filter by level" />
                         </SelectTrigger>
@@ -127,8 +107,8 @@ function App() {
                             </SelectItem>
                           ))}
                         </SelectContent>
-                      </Select>
-                      <Select value={loggerFilter || ""} onValueChange={(value) => setLoggerFilter(value || null)}>
+                      </Select> */}
+                      {/* <Select value={loggerFilter || ""} onValueChange={(value) => setLoggerFilter(value || null)}>
                         <SelectTrigger className="w-[150px]">
                           <SelectValue placeholder="Filter by logger" />
                         </SelectTrigger>
@@ -140,7 +120,7 @@ function App() {
                             </SelectItem>
                           ))}
                         </SelectContent>
-                      </Select>
+                      </Select> */}
                     </div>
                   </div>
 
@@ -158,15 +138,27 @@ function App() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {filteredLogs.length > 0 ? (
-                              filteredLogs.map((log, index) => (
+                            {watchedFile.lines.length > 0 ? (
+                              watchedFile.lines.map((log, index) => (
                                 <TableRow key={index}>
                                   <TableCell>
-                                    <Badge className={getLevelBadgeColor(log.level)}>{log.level}</Badge>
+                                    <Badge >
+                                      {/* TODO{log.level} */}
+                                      INFO
+                                    </Badge>
                                   </TableCell>
-                                  <TableCell className="font-mono text-xs">{log.time}</TableCell>
-                                  <TableCell className="truncate max-w-[150px]">{log.logger}</TableCell>
-                                  <TableCell className="font-mono text-xs whitespace-pre-wrap">{log.message}</TableCell>
+                                  <TableCell className="font-mono text-xs">
+                                    {/* TODO {log.time} */}
+                                    12:34:56 12.03.2024
+                                  </TableCell>
+                                  <TableCell className="truncate max-w-[150px]">
+                                    {/* TODO {log.logger} */}
+                                    DemoLogger
+                                  </TableCell>
+                                  <TableCell className="font-mono text-xs whitespace-pre-wrap">
+                                    {/* TODO {log.message} */}
+                                    {log}
+                                  </TableCell>
                                 </TableRow>
                               ))
                             ) : (
@@ -180,9 +172,9 @@ function App() {
                         </Table>
                       </div>
                     </div>
-                    <div className="text-sm text-muted-foreground mt-2">
+                    {/* <div className="text-sm text-muted-foreground mt-2">
                       Showing {filteredLogs.length} of {allLogs.length} log entries
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               </TabsContent>
@@ -195,7 +187,7 @@ function App() {
             </div>
             <h3 className="text-lg font-medium mb-2">No log files uploaded</h3>
             <p className="text-muted-foreground mb-4">Select a log file to view and analyze its contents</p>
-            <Button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 mx-auto">
+            <Button onClick={selectFile} className="flex items-center gap-2 mx-auto">
               <Upload size={16} />
               Add Log File
             </Button>
