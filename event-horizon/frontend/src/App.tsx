@@ -55,7 +55,7 @@ function App() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      <div className="container mx-auto py-4 px-4">
+      <div className="py-4 px-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
           <h1 className="text-2xl font-bold">Log Viewer</h1>
           <div className="flex items-center gap-2">
