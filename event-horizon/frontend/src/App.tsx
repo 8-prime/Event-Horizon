@@ -4,35 +4,55 @@ import { EventsOn } from "../wailsjs/runtime";
 import { Button } from './components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './components/ui/table';
 import { Badge } from './components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { FileText, Upload, X } from 'lucide-react';
-import { FileUpdate, FileWatch } from './models/filewatch';
+import { FileUpdate, FileWatch, GetLogMessage } from './models/filewatch';
+import NoFile from './components/NoFile';
 
 function App() {
   const [watchedFiles, setWatchedFiles] = useState<FileWatch[]>([])
-  const [activeTab, setActiveTab] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<FileWatch | undefined>();
 
   const selectFile = () => {
-    SelectFile()
+    SelectFile().then((wi) => {
+      const fi: FileWatch = {
+        lines: [],
+        info: wi
+      }
+      setWatchedFiles([...watchedFiles, fi])
+      setActiveTab(fi)
+    })
   }
 
   const removeFile = (id: string) => {
     StopTailing(id).then(() => {
-      //remove tailed file after succesfully removing
+      //remove tailed file after successfully removing
       setWatchedFiles(watchedFiles.filter(f => f.info.id != id))
     })
   }
 
   useEffect(() => {
-    EventsOn('file-update', (line: FileUpdate) => {
+    const updateCancel = EventsOn('file-update', (line: FileUpdate) => {
+      setWatchedFiles(current => {
+        return current.map(watched => {
+          if (watched.info.id != line.id) {
+            return watched
+          }
+          return { ...watched, lines: [...watched.lines, GetLogMessage(line.line)] }
+        })
+      })
+
       const wI = watchedFiles.find(f => f.info.id == line.id)
       if (wI) {
-        wI.lines.push(line.line)
+        wI.lines.push(GetLogMessage(line.line))
       }
     })
-    EventsOn('tail-stopped', (file: string) => {
+    const stoppedEventCancel = EventsOn('tail-stopped', (file: string) => {
       console.log("Stopped watching file: " + file);
     })
+    return () => {
+      updateCancel();
+      stoppedEventCancel();
+    }
   }, [])
 
   return (
@@ -49,40 +69,38 @@ function App() {
         </div>
 
         {watchedFiles.length > 0 ? (
-          <Tabs
-            value={activeTab || undefined}
-            onValueChange={setActiveTab}
+          <div
             className="w-full h-[calc(100vh-80px)] flex flex-col"
           >
             <div className="flex items-start border rounded-lg overflow-x-auto">
-              <TabsList className="flex-grow bg-transparent h-auto p-1">
+              <div className="flex-grow bg-transparent h-auto p-1">
                 {watchedFiles.map((watchedFile) => (
-                  <TabsTrigger
+                  <div
                     key={watchedFile.info.id}
-                    value={watchedFile.info.id}
                     className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
-                    <FileText size={14} />
-                    <span className="truncate max-w-[150px]">{watchedFile.info.fileName}</span>
+                    <Button onClick={() => { setActiveTab(watchedFile) }}>
+                      <FileText size={14} />
+                      <span className="truncate max-w-[150px]">{watchedFile.info.fileName}</span>
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-5 w-5 rounded-full ml-1"
-                      onClick={(e) => {
-                        e.stopPropagation()
+                      onClick={() => {
                         removeFile(watchedFile.info.id)
                       }}
                     >
                       <X size={12} />
                       <span className="sr-only">Remove</span>
                     </Button>
-                  </TabsTrigger>
+                  </div>
                 ))}
-              </TabsList>
+              </div>
             </div>
 
-            {watchedFiles.map((watchedFile) => (
-              <TabsContent key={watchedFile.info.id} value={watchedFile.info.id} className="mt-4 flex-1 flex flex-col overflow-hidden">
+            {activeTab !== undefined &&
+              <div key={activeTab.info.id} className="mt-4 flex-1 flex flex-col overflow-hidden">
                 <div className="flex flex-col h-full">
                   {/* Search and filter controls */}
                   <div className="flex flex-col sm:flex-row gap-4 my-4">
@@ -133,31 +151,27 @@ function App() {
                             <TableRow>
                               <TableHead className="w-[100px]">Level</TableHead>
                               <TableHead className="w-[180px]">Time</TableHead>
-                              <TableHead className="w-[150px]">Logger</TableHead>
+                              {/* <TableHead className="w-[150px]">Logger</TableHead> */}
                               <TableHead>Message</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {watchedFile.lines.length > 0 ? (
-                              watchedFile.lines.map((log, index) => (
-                                <TableRow key={index}>
+                            {activeTab.lines.length > 0 ? (
+                              activeTab.lines.map((log) => (
+                                <TableRow key={log.id}>
                                   <TableCell>
                                     <Badge >
-                                      {/* TODO{log.level} */}
-                                      INFO
+                                      {log.level}
                                     </Badge>
                                   </TableCell>
                                   <TableCell className="font-mono text-xs">
-                                    {/* TODO {log.time} */}
-                                    12:34:56 12.03.2024
+                                    {log.timestamp}
                                   </TableCell>
-                                  <TableCell className="truncate max-w-[150px]">
-                                    {/* TODO {log.logger} */}
-                                    DemoLogger
-                                  </TableCell>
+                                  {/* <TableCell className="truncate max-w-[150px]">
+                                    {log.messageTemplate}
+                                  </TableCell> */}
                                   <TableCell className="font-mono text-xs whitespace-pre-wrap">
-                                    {/* TODO {log.message} */}
-                                    {log}
+                                    {log.messageTemplate}
                                   </TableCell>
                                 </TableRow>
                               ))
@@ -177,21 +191,11 @@ function App() {
                     </div> */}
                   </div>
                 </div>
-              </TabsContent>
-            ))}
-          </Tabs>
-        ) : (
-          <div className="border rounded-lg p-12 text-center">
-            <div className="flex justify-center mb-4">
-              <FileText size={48} className="text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-medium mb-2">No log files uploaded</h3>
-            <p className="text-muted-foreground mb-4">Select a log file to view and analyze its contents</p>
-            <Button onClick={selectFile} className="flex items-center gap-2 mx-auto">
-              <Upload size={16} />
-              Add Log File
-            </Button>
+              </div>
+            }
           </div>
+        ) : (
+          <NoFile selectFile={selectFile} />
         )}
       </div>
     </div>

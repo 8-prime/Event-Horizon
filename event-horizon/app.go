@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 
 	"github.com/google/uuid"
@@ -91,6 +92,7 @@ func startTailing(watched *WatchedFile, ctx context.Context) {
 			if line.Err == nil {
 				runtime.EventsEmit(ctx, "read-error", watched.Id) //Show toast that reading for file had error
 			}
+			fmt.Println("Read new line")
 			runtime.EventsEmit(ctx, "file-update", FileUpdate{
 				Id:   watched.Id,
 				Line: line.Text,
