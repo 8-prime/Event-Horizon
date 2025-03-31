@@ -2,9 +2,10 @@ import { FileWatch, LogMessage } from "@/models/filewatch"
 import { Badge } from "./ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
 import { Button } from "./ui/button"
-import { Clock, FileText, MessageSquare, X } from "lucide-react"
+import { Braces, Clock, FileText, MessageSquare, X } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { cn, getLevelBadgeColor, getLevelBgColor } from "@/lib/utils"
+import PropertDetail from "./PropertyDetail"
 
 export type LogFileTableProps = {
     watchedFiles: FileWatch[]
@@ -149,6 +150,13 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab }: L
                                                     </div>
                                                 </div>
                                             </div>
+                                            <div className="flex items-start gap-2">
+                                                <Braces className="w-4 h-4 mt-1 text-muted-foreground" />
+                                                <div>
+                                                    {Object.entries(selectedLog.properties).map(([k, v]) => <PropertDetail key={k} k={k} v={v} />)}
+                                                </div>
+                                            </div>
+
                                         </div>
                                     </div>
                                 </div>
