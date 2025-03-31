@@ -21,7 +21,7 @@ export type LogMessage = {
     timestamp: string,
     level: string,
     messageTemplate: string,
-    properties: string
+    properties: Properties
 }
 
 

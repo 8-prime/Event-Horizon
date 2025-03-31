@@ -10,9 +10,9 @@ export function getLevelBadgeColor(level: string) {
   switch (level.toUpperCase()) {
     case "ERROR":
       return "bg-red-500 hover:bg-red-600"
-    case "WARN":
+    case "WARNING":
       return "bg-yellow-500 hover:bg-yellow-600"
-    case "INFO":
+    case "INFORMATION":
       return "bg-blue-500 hover:bg-blue-600"
     case "DEBUG":
       return "bg-green-500 hover:bg-green-600"

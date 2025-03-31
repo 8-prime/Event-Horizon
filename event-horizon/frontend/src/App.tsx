@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { SelectFile, StopTailing } from "../wailsjs/go/main/App";
 import { EventsOn } from "../wailsjs/runtime";
-import { Button } from './components/ui/button';
-import { Upload } from 'lucide-react';
 import { FileUpdate, FileWatch, GetLogMessage } from './models/filewatch';
 import NoFile from './components/NoFile';
 import LogFileTable from './components/LogFileTable';
@@ -54,24 +52,12 @@ function App() {
   }, [])
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      <div className="py-4 px-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-          <h1 className="text-2xl font-bold">Log Viewer</h1>
-          <div className="flex items-center gap-2">
-            <Button onClick={selectFile} className="flex items-center gap-2">
-              <Upload size={16} />
-              Upload Log File
-            </Button>
-          </div>
-        </div>
-
-        {watchedFiles.length > 0 ? (
-          <LogFileTable activeTabId={activeTab} setActiveTab={setActiveTab} removeFile={removeFile} watchedFiles={watchedFiles} />
-        ) : (
-          <NoFile selectFile={selectFile} />
-        )}
-      </div>
+    <div className="h-screen flex flex-col overflow-hidden p-4">
+      {watchedFiles.length > 0 ? (
+        <LogFileTable activeTabId={activeTab} setActiveTab={setActiveTab} removeFile={removeFile} watchedFiles={watchedFiles} selectFile={selectFile} />
+      ) : (
+        <NoFile selectFile={selectFile} />
+      )}
     </div>
   )
 }
