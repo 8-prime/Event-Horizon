@@ -8,7 +8,7 @@ export type NoFileProps = {
 
 const NoFile = ({ selectFile }: NoFileProps) => {
     return (
-        <div className="border rounded-lg p-12 text-center">
+        <div className="w-full h-full border rounded-lg p-12 text-center flex flex-col justify-center items-center">
             <div className="flex justify-center mb-4">
                 <FileText size={48} className="text-muted-foreground" />
             </div>
