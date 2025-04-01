@@ -5,9 +5,13 @@ export type PropertyDetailsProps = {
 }
 
 
-const PropertDetail = ({ k, v }: PropertyDetailsProps) => {
+const PropertyDetail = ({ k, v }: PropertyDetailsProps) => {
 
     const legalV = typeof v === "string" ? v : JSON.stringify(v)
+    if (typeof v !== "string") {
+        console.log(v);
+
+    }
 
     return (
         <div>
@@ -19,4 +23,4 @@ const PropertDetail = ({ k, v }: PropertyDetailsProps) => {
     )
 }
 
-export default PropertDetail;
+export default PropertyDetail;

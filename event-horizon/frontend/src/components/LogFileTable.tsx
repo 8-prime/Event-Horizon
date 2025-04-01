@@ -5,7 +5,7 @@ import { Button } from "./ui/button"
 import { Braces, Clock, FileText, MessageSquare, Upload, X } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { cn, getLevelBadgeColor, getLevelBgColor } from "@/lib/utils"
-import PropertDetail from "./PropertyDetail"
+import PropertyDetail from "./PropertyDetail"
 import { Input } from "./ui/input"
 
 export type LogFileTableProps = {
@@ -62,16 +62,16 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
         >
             <div className="flex items-start border rounded-lg overflow-x-auto">
                 <div className="flex-grow flex bg-transparent h-auto p-1">
-                    <div className="grow flex justify-start items-center">
+                    <div className="grow flex justify-start items-center gap-2">
                         {watchedFiles.map((watchedFile) => (
                             <div
                                 key={watchedFile.info.id}
                                 className={cn(
-                                    "flex items-center gap-2",
+                                    "flex items-center px-1",
                                     activeTabId == watchedFile.info.id && "bg-primary text-primary-foreground rounded-lg px-1"
                                 )}
                             >
-                                <Button onClick={() => { setActiveTab(watchedFile.info.id) }}>
+                                <Button variant="shell" onClick={() => { setActiveTab(watchedFile.info.id) }}>
                                     <FileText size={14} />
                                     <span className="truncate max-w-[150px]">{watchedFile.info.fileName}</span>
                                 </Button>
@@ -190,7 +190,7 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
                                             <div className="flex items-start gap-2">
                                                 <Braces className="w-4 h-4 mt-1 text-muted-foreground" />
                                                 <div>
-                                                    {Object.entries(selectedLog.properties).map(([k, v]) => <PropertDetail key={k} k={k} v={v} />)}
+                                                    {Object.entries(selectedLog.properties).map(([k, v]) => <PropertyDetail key={k} k={k} v={v} />)}
                                                 </div>
                                             </div>
 
