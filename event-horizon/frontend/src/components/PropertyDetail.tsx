@@ -7,7 +7,7 @@ export type PropertyDetailsProps = {
 
 const PropertyDetail = ({ k, v }: PropertyDetailsProps) => {
 
-    const legalV = typeof v === "string" ? v : JSON.stringify(v)
+    const legalV = typeof v === "string" ? v : JSON.stringify(v, null, 2)
     if (typeof v !== "string") {
         console.log(v);
 
@@ -16,9 +16,9 @@ const PropertyDetail = ({ k, v }: PropertyDetailsProps) => {
     return (
         <div>
             <div className="text-sm font-medium">{k}</div>
-            <div className="font-mono text-sm whitespace-pre-wrap break-words">
+            <pre className="bg-muted p-4 rounded-md overflow-auto text-sm">
                 {legalV}
-            </div>
+            </pre>
         </div>
     )
 }
