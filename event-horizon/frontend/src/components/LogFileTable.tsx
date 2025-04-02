@@ -2,11 +2,11 @@ import { FileWatch, LogMessage } from "@/models/filewatch"
 import { Badge } from "./ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
 import { Button } from "./ui/button"
-import { Braces, Clock, FileText, MessageSquare, Upload, X } from "lucide-react"
+import { FileText, Upload, X } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { cn, getLevelBadgeColor, getLevelBgColor } from "@/lib/utils"
-import PropertyDetail from "./PropertyDetail"
 import { Input } from "./ui/input"
+import DetailsPanel from "./DetailsPanel"
 
 export type LogFileTableProps = {
     watchedFiles: FileWatch[]
@@ -155,49 +155,7 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
                                 </div>
                             </div>
                             {/* Details panel */}
-                            {selectedLog && (
-                                <div className="hidden md:flex md:w-1/3 flex-col border rounded-lg overflow-hidden">
-                                    <div className="p-4 border-b bg-muted/50 flex justify-between items-center">
-                                        <h3 className="font-medium">Log Details</h3>
-                                        <Button variant="ghost" size="icon" onClick={() => setSelectedLog(undefined)}>
-                                            <X size={16} />
-                                            <span className="sr-only">Close</span>
-                                        </Button>
-                                    </div>
-                                    <div className="p-4 overflow-auto flex-1">
-                                        <div className={cn("p-3 rounded-lg mb-4", getLevelBgColor(selectedLog.level))}>
-                                            <Badge className={getLevelBadgeColor(selectedLog.level)}>{selectedLog.level}</Badge>
-                                        </div>
-
-                                        <div className="space-y-4">
-                                            <div className="flex items-start gap-2">
-                                                <Clock className="w-4 h-4 mt-1 text-muted-foreground" />
-                                                <div>
-                                                    <div className="text-sm font-medium">Timestamp</div>
-                                                    <div className="font-mono text-sm">{selectedLog.timestamp}</div>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-start gap-2">
-                                                <MessageSquare className="w-4 h-4 mt-1 text-muted-foreground" />
-                                                <div>
-                                                    <div className="text-sm font-medium">Message</div>
-                                                    <div className="font-mono text-sm whitespace-pre-wrap break-words">
-                                                        {selectedLog.messageTemplate}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-start gap-2">
-                                                <Braces className="w-4 h-4 mt-1 text-muted-foreground" />
-                                                <div>
-                                                    {Object.entries(selectedLog.properties).map(([k, v]) => <PropertyDetail key={k} k={k} v={v} />)}
-                                                </div>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                            <DetailsPanel logMessage={selectedLog} setSelectedLog={setSelectedLog} />
                         </div>
                     </div>
                 </div>
