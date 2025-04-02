@@ -21,6 +21,7 @@ export type LogMessage = {
     level: string,
     messageTemplate: string,
     properties: Properties,
+    sourceContext: string | undefined,
     exception: string | undefined
     eventId: string | undefined,
     renderings: string | undefined,
@@ -38,6 +39,7 @@ export type CompactLog = {
     ["@r"]: string,//renderings
     ["@tr"]: string,//trace id
     ["@sp"]: string,//span id
+    ["SourceContext"]: string //source context (logger type)
 }
 
 const isCompactLog = (log: any) => {
@@ -48,6 +50,7 @@ export type DefaultJsonLog = {
     ["Timestamp"]: string,
     ["Level"]: string,
     ["MessageTemplate"]: string,
+    ["SourceContext"]: string
     ["Properties"]: any
 }
 
@@ -66,6 +69,7 @@ export const GetLogMessage = (line: string): LogMessage | undefined => {
             level: defaultJson.Level,
             messageTemplate: defaultJson.MessageTemplate,
             properties: defaultJson.Properties,
+            sourceContext: defaultJson.SourceContext,
             eventId: undefined,
             exception: undefined,
             renderings: undefined,
@@ -78,7 +82,7 @@ export const GetLogMessage = (line: string): LogMessage | undefined => {
 
         let properties: { [key: string]: any } = {};
         Object.keys(json)
-            .filter(k => !k.includes("@"))
+            .filter(k => !k.includes("@") && k !== "SourceContext")
             .forEach(k => properties[k] = json[k])
 
         return {
@@ -87,6 +91,7 @@ export const GetLogMessage = (line: string): LogMessage | undefined => {
             level: compactJson['@l'] ?? "-",
             messageTemplate: compactJson['@mt'] ?? "-",
             properties: properties,
+            sourceContext: compactJson.SourceContext,
             renderings: compactJson['@r'],
             exception: compactJson['@x'],
             eventId: compactJson['@i'],
