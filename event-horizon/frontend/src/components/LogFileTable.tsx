@@ -1,12 +1,12 @@
 import { FileWatch, LogMessage } from "@/models/filewatch"
-import { Badge } from "./ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
+import { Table, TableHead, TableHeader, TableRow } from "./ui/table"
 import { Button } from "./ui/button"
 import { FileText, Upload, X } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
-import { cn, getLevelBadgeColor, getLevelBgColor } from "@/lib/utils"
+import { cn } from "@/lib/utils"
 import { Input } from "./ui/input"
 import DetailsPanel from "./DetailsPanel"
+import VirtualizedTableBody from "./VirtualizedTableBody"
 
 export type LogFileTableProps = {
     watchedFiles: FileWatch[]
@@ -119,38 +119,12 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
                                                 <TableHead>Message</TableHead>
                                             </TableRow>
                                         </TableHeader>
-                                        <TableBody>
-                                            {filteredFileWatch.lines.length > 0 ? (
-                                                filteredFileWatch.lines.map((log) => (
-                                                    <TableRow key={log.id}
-                                                        className={cn(
-                                                            "cursor-pointer transition-colors",
-                                                            selectedLog === log && getLevelBgColor(log.level),
-                                                            selectedLog === log && "font-medium",
-                                                        )}
-                                                        onClick={() => handleRowClick(log)}
-                                                    >
-                                                        <TableCell>
-                                                            <Badge className={getLevelBadgeColor(log.level)} >
-                                                                {log.level}
-                                                            </Badge>
-                                                        </TableCell>
-                                                        <TableCell className="font-mono text-xs">
-                                                            {log.timestamp}
-                                                        </TableCell>
-                                                        <TableCell className="font-mono text-xs whitespace-pre-wrap">
-                                                            {log.messageTemplate}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))
-                                            ) : (
-                                                <TableRow>
-                                                    <TableCell colSpan={4} className="h-24 text-center">
-                                                        No logs found matching your filters.
-                                                    </TableCell>
-                                                </TableRow>
-                                            )}
-                                        </TableBody>
+                                        <VirtualizedTableBody
+                                            handleRowClick={handleRowClick}
+                                            logInfo={filteredFileWatch}
+                                            selectedLog={selectedLog}
+                                            rowHeight={38}
+                                        />
                                     </Table>
                                 </div>
                             </div>
