@@ -8,10 +8,6 @@ export type PropertyDetailsProps = {
 const PropertyDetail = ({ k, v }: PropertyDetailsProps) => {
 
     const legalV = typeof v === "string" ? v : JSON.stringify(v, null, 2)
-    if (typeof v !== "string") {
-        console.log(v);
-
-    }
 
     return (
         <div>
