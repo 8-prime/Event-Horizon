@@ -18,8 +18,10 @@ export type LogFileTableProps = {
 
 const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, selectFile }: LogFileTableProps) => {
     const scrollRef = useRef<HTMLDivElement | null>(null);
+    const divRef = useRef<HTMLDivElement | null>(null)
 
     const [search, setSearch] = useState<string>("")
+    const [childHeight, setChildHeight] = useState<string>('auto');
     const [selectedLog, setSelectedLog] = useState<LogMessage | undefined>();
 
     const activeTab = useMemo(() => {
@@ -52,8 +54,25 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
     }, [activeTab])
 
 
+    useEffect(() => {
+        const updateChildHeight = () => {
+            if (divRef.current) {
+                const parentHeight = divRef.current.clientHeight;
+                setChildHeight(`${parentHeight}px`);
+            }
+        };
+
+        updateChildHeight();
+        window.addEventListener('resize', updateChildHeight);
+
+        // Cleanup event listener on component unmount
+        return () => {
+            window.removeEventListener('resize', updateChildHeight);
+        };
+    }, [divRef])
+
+
     const handleRowClick = (log: LogMessage) => {
-        console.log(log);
         setSelectedLog(log)
     }
 
@@ -107,11 +126,14 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
                             className="w-full py-2"
                         ></Input>
                         <div className="flex-1 flex gap-4 h-full overflow-hidden">
-                            <div className={cn(
-                                "border rounded-lg overflow-hidden flex-1 flex flex-col",
-                                selectedLog ? "md:w-2/3" : "w-full",
-                            )}>
-                                <DataTable data={filteredFileWatch.lines} height="500px" columns={columns} handleRowClick={handleRowClick} />
+                            <div
+                                ref={divRef}
+                                className={cn(
+                                    "border rounded-lg overflow-hidden flex-1 flex flex-col",
+                                    selectedLog ? "md:w-2/3" : "w-full",
+                                )}
+                            >
+                                <DataTable data={filteredFileWatch.lines} height={childHeight} columns={columns} handleRowClick={handleRowClick} />
                             </div>
                             {/* Details panel */}
                             <DetailsPanel logMessage={selectedLog} setSelectedLog={setSelectedLog} />
