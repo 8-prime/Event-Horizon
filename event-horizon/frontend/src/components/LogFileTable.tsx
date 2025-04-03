@@ -1,12 +1,12 @@
 import { FileWatch, LogMessage } from "@/models/filewatch"
-import { Table, TableHead, TableHeader, TableRow } from "./ui/table"
 import { Button } from "./ui/button"
 import { FileText, Upload, X } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import { Input } from "./ui/input"
 import DetailsPanel from "./DetailsPanel"
-import VirtualizedTableBody from "./VirtualizedTableBody"
+import { DataTable } from "./VirtualTable"
+import { columns } from "./TableColumns"
 
 export type LogFileTableProps = {
     watchedFiles: FileWatch[]
@@ -53,6 +53,7 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
 
 
     const handleRowClick = (log: LogMessage) => {
+        console.log(log);
         setSelectedLog(log)
     }
 
@@ -110,23 +111,7 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
                                 "border rounded-lg overflow-hidden flex-1 flex flex-col",
                                 selectedLog ? "md:w-2/3" : "w-full",
                             )}>
-                                <div ref={scrollRef} className="overflow-auto flex-1">
-                                    <Table>
-                                        <TableHeader className="sticky top-0 bg-background z-10">
-                                            <TableRow>
-                                                <TableHead className="w-[100px]">Level</TableHead>
-                                                <TableHead className="w-[180px]">Time</TableHead>
-                                                <TableHead>Message</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <VirtualizedTableBody
-                                            handleRowClick={handleRowClick}
-                                            logInfo={filteredFileWatch}
-                                            selectedLog={selectedLog}
-                                            rowHeight={38}
-                                        />
-                                    </Table>
-                                </div>
+                                <DataTable data={filteredFileWatch.lines} height="500px" columns={columns} handleRowClick={handleRowClick} />
                             </div>
                             {/* Details panel */}
                             <DetailsPanel logMessage={selectedLog} setSelectedLog={setSelectedLog} />
