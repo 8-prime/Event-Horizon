@@ -1,12 +1,12 @@
 import { FileWatch, LogMessage } from "@/models/filewatch"
-import { Badge } from "./ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
 import { Button } from "./ui/button"
 import { FileText, Upload, X } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
-import { cn, getLevelBadgeColor, getLevelBgColor } from "@/lib/utils"
+import { cn } from "@/lib/utils"
 import { Input } from "./ui/input"
 import DetailsPanel from "./DetailsPanel"
+import { DataTable } from "./VirtualTable"
+import { columns } from "./TableColumns"
 
 export type LogFileTableProps = {
     watchedFiles: FileWatch[]
@@ -18,8 +18,10 @@ export type LogFileTableProps = {
 
 const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, selectFile }: LogFileTableProps) => {
     const scrollRef = useRef<HTMLDivElement | null>(null);
+    const divRef = useRef<HTMLDivElement | null>(null)
 
     const [search, setSearch] = useState<string>("")
+    const [childHeight, setChildHeight] = useState<string>('auto');
     const [selectedLog, setSelectedLog] = useState<LogMessage | undefined>();
 
     const activeTab = useMemo(() => {
@@ -50,6 +52,24 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
         if (!scrollRef.current) return;
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }, [activeTab])
+
+
+    useEffect(() => {
+        const updateChildHeight = () => {
+            if (divRef.current) {
+                const parentHeight = divRef.current.clientHeight;
+                setChildHeight(`${parentHeight}px`);
+            }
+        };
+
+        updateChildHeight();
+        window.addEventListener('resize', updateChildHeight);
+
+        // Cleanup event listener on component unmount
+        return () => {
+            window.removeEventListener('resize', updateChildHeight);
+        };
+    }, [divRef])
 
 
     const handleRowClick = (log: LogMessage) => {
@@ -106,53 +126,14 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
                             className="w-full py-2"
                         ></Input>
                         <div className="flex-1 flex gap-4 h-full overflow-hidden">
-                            <div className={cn(
-                                "border rounded-lg overflow-hidden flex-1 flex flex-col",
-                                selectedLog ? "md:w-2/3" : "w-full",
-                            )}>
-                                <div ref={scrollRef} className="overflow-auto flex-1">
-                                    <Table>
-                                        <TableHeader className="sticky top-0 bg-background z-10">
-                                            <TableRow>
-                                                <TableHead className="w-[100px]">Level</TableHead>
-                                                <TableHead className="w-[180px]">Time</TableHead>
-                                                <TableHead>Message</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {filteredFileWatch.lines.length > 0 ? (
-                                                filteredFileWatch.lines.map((log) => (
-                                                    <TableRow key={log.id}
-                                                        className={cn(
-                                                            "cursor-pointer transition-colors",
-                                                            selectedLog === log && getLevelBgColor(log.level),
-                                                            selectedLog === log && "font-medium",
-                                                        )}
-                                                        onClick={() => handleRowClick(log)}
-                                                    >
-                                                        <TableCell>
-                                                            <Badge className={getLevelBadgeColor(log.level)} >
-                                                                {log.level}
-                                                            </Badge>
-                                                        </TableCell>
-                                                        <TableCell className="font-mono text-xs">
-                                                            {log.timestamp}
-                                                        </TableCell>
-                                                        <TableCell className="font-mono text-xs whitespace-pre-wrap">
-                                                            {log.messageTemplate}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))
-                                            ) : (
-                                                <TableRow>
-                                                    <TableCell colSpan={4} className="h-24 text-center">
-                                                        No logs found matching your filters.
-                                                    </TableCell>
-                                                </TableRow>
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                </div>
+                            <div
+                                ref={divRef}
+                                className={cn(
+                                    "border rounded-lg overflow-hidden flex-1 flex flex-col",
+                                    selectedLog ? "md:w-2/3" : "w-full",
+                                )}
+                            >
+                                <DataTable data={filteredFileWatch.lines} height={childHeight} columns={columns} handleRowClick={handleRowClick} />
                             </div>
                             {/* Details panel */}
                             <DetailsPanel logMessage={selectedLog} setSelectedLog={setSelectedLog} />
