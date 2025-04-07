@@ -1,9 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
-import { main } from "wailsjs/go/models"
+import { models } from 'wailsjs/go/models';
 
 export type FileWatch = {
     lines: LogMessage[],
-    info: main.WatchInfo
+    info: models.WatchInfo
 }
 
 export type FileUpdate = {
