@@ -17,7 +17,6 @@ func HandleLineChanges(ctx context.Context, updates chan models.FileUpdate) {
 		select {
 		case newLine := <-updates:
 			updatedFiles = append(updatedFiles, newLine)
-
 		case <-timer.C:
 			for _, v := range updatedFiles {
 				runtime.EventsEmit(ctx, "file-update", v)

@@ -1,6 +1,11 @@
 import { v4 as uuidv4 } from 'uuid';
 import { models } from 'wailsjs/go/models';
 
+export type FileWatchRepo = {
+    [id: string]: FileWatch
+}
+
+
 export type FileWatch = {
     lines: LogMessage[],
     info: models.WatchInfo

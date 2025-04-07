@@ -1,4 +1,4 @@
-import { FileWatch, LogMessage } from "@/models/filewatch"
+import { FileWatch, FileWatchRepo, LogMessage } from "@/models/filewatch"
 import { Button } from "./ui/button"
 import { FileText, Upload, X } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
@@ -9,7 +9,7 @@ import { DataTable } from "./VirtualTable"
 import { columns } from "./TableColumns"
 
 export type LogFileTableProps = {
-    watchedFiles: FileWatch[]
+    watchedFiles: FileWatchRepo
     activeTabId: string
     removeFile: (id: string) => void
     setActiveTab: (id: string) => void
@@ -25,8 +25,8 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
     const [selectedLog, setSelectedLog] = useState<LogMessage | undefined>();
 
     const activeTab = useMemo(() => {
-        return watchedFiles.find(w => w.info.id === activeTabId)
-    }, [watchedFiles, search, activeTabId])
+        return watchedFiles[activeTabId]
+    }, [watchedFiles, activeTabId])
 
 
     const filterFunction = (message: LogMessage, search: string) => {
@@ -83,7 +83,7 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
             <div className="flex items-start border rounded-lg overflow-x-auto">
                 <div className="flex-grow flex bg-transparent h-auto p-1">
                     <div className="grow flex justify-start items-center gap-2">
-                        {watchedFiles.map((watchedFile) => (
+                        {Object.entries(watchedFiles).map(([_, watchedFile]) => (
                             <div
                                 key={watchedFile.info.id}
                                 className={cn(
