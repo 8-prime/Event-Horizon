@@ -3,6 +3,7 @@ package main
 import (
 	"event-horizon/models"
 	"event-horizon/utils"
+	"fmt"
 
 	"context"
 
@@ -33,8 +34,6 @@ func (a *App) startup(ctx context.Context) {
 }
 
 func (a *App) SelectFile() (models.WatchInfo, error) {
-	// Open file selection dialog
-
 	watched := models.WatchedFile{
 		Id: uuid.New().String(),
 	}
@@ -83,7 +82,8 @@ func startTailing(a *App, watched *models.WatchedFile) {
 
 // StopTailing stops the current file tailing operation
 func (a *App) StopTailing(id string) {
-	a.watchedFiles = removeByIdAndStop(a.watchedFiles, id)
+	fmt.Print("called to stop trailing")
+	// a.watchedFiles = removeByIdAndStop(a.watchedFiles, id)
 }
 
 func removeByIdAndStop(slice []models.WatchedFile, id string) []models.WatchedFile {

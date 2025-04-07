@@ -24,12 +24,11 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
     const [childHeight, setChildHeight] = useState<string>('auto');
     const [selectedLog, setSelectedLog] = useState<LogMessage | undefined>();
 
-    const activeTab = useMemo(() => {
-        return watchedFiles[activeTabId]
-    }, [watchedFiles, activeTabId])
-
-
     const filterFunction = (message: LogMessage, search: string) => {
+        if (!search) {
+            return true;
+        }
+
         const templatecontains = message.messageTemplate.toLowerCase().includes(search)
         const keys = Object.keys(message.properties)
         const propcontains = keys.some(k => {
@@ -40,13 +39,15 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
         return propcontains || templatecontains;
     }
 
-    const filteredFileWatch = useMemo(() => {
+    const activeTab = useMemo(() => {
+        console.log("setting active tab");
+        const wf = watchedFiles[activeTabId]
         const loweredSearch = search.toLowerCase()
         return {
-            ...activeTab,
-            lines: activeTab?.lines.filter(l => filterFunction(l, loweredSearch))
+            ...wf,
+            lines: wf.lines.filter(l => filterFunction(l, loweredSearch))
         } as FileWatch
-    }, [activeTab, search]);
+    }, [watchedFiles, activeTabId, search])
 
     useEffect(() => {
         if (!scrollRef.current) return;
@@ -116,8 +117,8 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
                 </div>
             </div>
 
-            {filteredFileWatch !== undefined &&
-                <div key={filteredFileWatch.info.id} className="mt-4 flex-1 flex flex-col overflow-hidden">
+            {activeTab !== undefined &&
+                <div key={activeTab.info.id} className="mt-4 flex-1 flex flex-col overflow-hidden">
                     <div className="flex flex-col h-full gap-4">
                         <Input
                             placeholder="Search logs..."
@@ -133,7 +134,7 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
                                     selectedLog ? "md:w-2/3" : "w-full",
                                 )}
                             >
-                                <DataTable data={filteredFileWatch.lines} height={childHeight} columns={columns} handleRowClick={handleRowClick} />
+                                <DataTable data={activeTab.lines} height={childHeight} columns={columns} handleRowClick={handleRowClick} />
                             </div>
                             {/* Details panel */}
                             <DetailsPanel logMessage={selectedLog} setSelectedLog={setSelectedLog} />
