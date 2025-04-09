@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/google/uuid"
-	"github.com/labstack/gommon/log"
 	"github.com/nxadm/tail"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -102,7 +101,6 @@ func startTailing(watched *WatchedFile, ctx context.Context) {
 			return
 		case line := <-watched.Tail.Lines:
 			if line.Err == nil {
-				log.Error("line read err")
 				runtime.EventsEmit(ctx, "read-error", watched.Id) //Show toast that reading for file had error
 			}
 			fmt.Println("Read new line")
