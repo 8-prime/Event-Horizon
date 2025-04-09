@@ -6,7 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/google/uuid"
-	"github.com/hpcloud/tail"
+	"github.com/labstack/gommon/log"
+	"github.com/nxadm/tail"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -25,6 +26,8 @@ type WatchedFile struct {
 	Id       string
 	FilePath string
 	Tail     *tail.Tail
+	Context  context.Context
+	Cancel   context.CancelFunc
 }
 
 func (w *WatchedFile) GetInfo() WatchInfo {
@@ -62,34 +65,44 @@ func (a *App) SelectFile() (WatchInfo, error) {
 	file, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
 		Title: "Select File to Tail",
 	})
+	if err != nil {
+		return watched.GetInfo(), err
+	}
 	watched.FilePath = file
 
+	t, err := tail.TailFile(watched.FilePath, tail.Config{
+		Follow: true,
+		Poll:   true,
+	})
 	if err != nil {
 		return watched.GetInfo(), err
 	}
 
+	watched.Tail = t
+	watched.Context, watched.Cancel = context.WithCancel(a.ctx)
+	a.watchedFiles = append(a.watchedFiles, watched)
 	go startTailing(&watched, a.ctx)
 	return watched.GetInfo(), nil
 }
 
 // StartTailing begins tailing the selected file
 func startTailing(watched *WatchedFile, ctx context.Context) {
-	t, err := tail.TailFile(watched.FilePath, tail.Config{
-		Follow: true,
-		Poll:   true,
-	})
-	defer t.Stop()
-	if err != nil {
-		runtime.EventsEmit(ctx, "tail-error", err.Error())
-	}
-
+	// defer watched.Tail.Stop()
 	for {
 		select {
+		case <-watched.Context.Done():
+			runtime.EventsEmit(
+				watched.Context,
+				"tail-stopped",
+				watched.Id,
+			) // Verify that viewing has stopped
+			return
 		case <-ctx.Done():
 			runtime.EventsEmit(ctx, "tail-stopped", watched.Id) //Verify that viewing has stopped
 			return
-		case line := <-t.Lines:
+		case line := <-watched.Tail.Lines:
 			if line.Err == nil {
+				log.Error("line read err")
 				runtime.EventsEmit(ctx, "read-error", watched.Id) //Show toast that reading for file had error
 			}
 			fmt.Println("Read new line")
@@ -109,7 +122,11 @@ func (a *App) StopTailing(id string) {
 func removeByIdAndStop(slice []WatchedFile, id string) []WatchedFile {
 	for i, item := range slice {
 		if item.Id == id {
-			item.Tail.Stop()
+			item.Cancel()
+			err := item.Tail.Stop()
+			if err != nil {
+				fmt.Println("Error stopping tail")
+			}
 			slice[i] = slice[len(slice)-1]
 			return slice[:len(slice)-1]
 		}
