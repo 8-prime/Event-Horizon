@@ -8,7 +8,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/hpcloud/tail"
+	"github.com/nxadm/tail"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -41,55 +41,67 @@ func (a *App) SelectFile() (models.WatchInfo, error) {
 	file, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
 		Title: "Select File to Tail",
 	})
-	watched.FilePath = file
-
 	if err != nil {
 		return watched.GetInfo(), err
 	}
+	watched.FilePath = file
 
-	go startTailing(a, &watched)
-	a.watchedFiles = append(a.watchedFiles, watched)
-	return watched.GetInfo(), nil
-}
-
-// StartTailing begins tailing the selected file
-func startTailing(a *App, watched *models.WatchedFile) {
 	t, err := tail.TailFile(watched.FilePath, tail.Config{
 		Follow: true,
 		Poll:   true,
 	})
-	defer t.Stop()
 	if err != nil {
-		runtime.EventsEmit(a.ctx, "tail-error", err.Error())
+		return watched.GetInfo(), err
 	}
 
+	watched.Tail = t
+	watched.Context, watched.Cancel = context.WithCancel(a.ctx)
+	a.watchedFiles = append(a.watchedFiles, watched)
+	go startTailing(&watched, a.ctx)
+	return watched.GetInfo(), nil
+}
+
+// StartTailing begins tailing the selected file
+func startTailing(watched *models.WatchedFile, ctx context.Context) {
+	// defer watched.Tail.Stop()
 	for {
 		select {
-		case <-a.ctx.Done():
-			runtime.EventsEmit(a.ctx, "tail-stopped", watched.Id) //Verify that viewing has stopped
+		case <-watched.Context.Done():
+			runtime.EventsEmit(
+				watched.Context,
+				"tail-stopped",
+				watched.Id,
+			) // Verify that viewing has stopped
 			return
-		case line := <-t.Lines:
+		case <-ctx.Done():
+			runtime.EventsEmit(ctx, "tail-stopped", watched.Id) //Verify that viewing has stopped
+			return
+		case line := <-watched.Tail.Lines:
 			if line.Err == nil {
-				runtime.EventsEmit(a.ctx, "read-error", watched.Id) //Show toast that reading for file had error
+				runtime.EventsEmit(ctx, "read-error", watched.Id) //Show toast that reading for file had error
 			}
-			a.updatesChannel <- models.FileUpdate{
+			fmt.Println("Read new line")
+			runtime.EventsEmit(ctx, "file-update", models.FileUpdate{
 				Id:   watched.Id,
 				Line: line.Text,
-			}
+			})
 		}
 	}
 }
 
 // StopTailing stops the current file tailing operation
 func (a *App) StopTailing(id string) {
-	fmt.Print("called to stop trailing")
-	// a.watchedFiles = removeByIdAndStop(a.watchedFiles, id)
+	a.watchedFiles = removeByIdAndStop(a.watchedFiles, id)
 }
 
 func removeByIdAndStop(slice []models.WatchedFile, id string) []models.WatchedFile {
 	for i, item := range slice {
 		if item.Id == id {
-			item.Tail.Stop()
+			item.Cancel()
+			err := item.Tail.Stop()
+			if err != nil {
+				fmt.Println("Error stopping tail")
+			}
 			slice[i] = slice[len(slice)-1]
 			return slice[:len(slice)-1]
 		}

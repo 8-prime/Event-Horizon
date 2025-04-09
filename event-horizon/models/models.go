@@ -1,9 +1,10 @@
 package models
 
 import (
+	"context"
 	"path/filepath"
 
-	"github.com/hpcloud/tail"
+	"github.com/nxadm/tail"
 )
 
 type FileUpdate struct {
@@ -21,6 +22,8 @@ type WatchedFile struct {
 	Id       string
 	FilePath string
 	Tail     *tail.Tail
+	Context  context.Context
+	Cancel   context.CancelFunc
 }
 
 func (w *WatchedFile) GetInfo() WatchInfo {
