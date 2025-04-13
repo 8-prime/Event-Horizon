@@ -7,7 +7,7 @@ import (
 	"github.com/nxadm/tail"
 )
 
-type FileUpdate struct {
+type LineUpdate struct {
 	Id   string `json:"id"`
 	Line string `json:"line"`
 }

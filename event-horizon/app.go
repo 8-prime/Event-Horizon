@@ -16,7 +16,7 @@ import (
 type App struct {
 	ctx            context.Context
 	watchedFiles   []models.WatchedFile
-	updatesChannel chan models.FileUpdate
+	updatesChannel chan models.LineUpdate
 }
 
 // NewApp creates a new App application struct
@@ -28,7 +28,7 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	a.updatesChannel = make(chan models.FileUpdate)
+	a.updatesChannel = make(chan models.LineUpdate)
 
 	go utils.HandleLineChanges(a.ctx, a.updatesChannel)
 }
@@ -57,13 +57,12 @@ func (a *App) SelectFile() (models.WatchInfo, error) {
 	watched.Tail = t
 	watched.Context, watched.Cancel = context.WithCancel(a.ctx)
 	a.watchedFiles = append(a.watchedFiles, watched)
-	go startTailing(&watched, a.ctx)
+	go startTailing(a, &watched, a.ctx)
 	return watched.GetInfo(), nil
 }
 
 // StartTailing begins tailing the selected file
-func startTailing(watched *models.WatchedFile, ctx context.Context) {
-	// defer watched.Tail.Stop()
+func startTailing(app *App, watched *models.WatchedFile, ctx context.Context) {
 	for {
 		select {
 		case <-watched.Context.Done():
@@ -81,10 +80,10 @@ func startTailing(watched *models.WatchedFile, ctx context.Context) {
 				runtime.EventsEmit(ctx, "read-error", watched.Id) //Show toast that reading for file had error
 			}
 			fmt.Println("Read new line")
-			runtime.EventsEmit(ctx, "file-update", models.FileUpdate{
+			app.updatesChannel <- models.LineUpdate{
 				Id:   watched.Id,
 				Line: line.Text,
-			})
+			}
 		}
 	}
 }

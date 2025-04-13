@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { SelectFile, StopTailing } from "../wailsjs/go/main/App";
 import { EventsOn } from "../wailsjs/runtime";
-import { FileUpdate, FileWatch, FileWatchRepo, GetLogMessage } from './models/filewatch';
+import { FileWatch, FileWatchRepo, GetLogMessage, LogUpdate } from './models/filewatch';
 import NoFile from './components/NoFile';
 import LogFileTable from './components/LogFileTable';
 import { Toaster } from './components/ui/sonner';
+import { create } from 'mutative';
 
 
 function App() {
@@ -29,29 +30,23 @@ function App() {
     })
   }
 
+  const updateDraft = (draft: FileWatchRepo, update: LogUpdate) => {
+    Object.entries(update).forEach(([id, lines]) => {
+      const mapped = lines
+        .map(line => GetLogMessage(line))
+        .filter(l => l !== undefined);
+      draft[id].lines = draft[id].lines.concat(mapped)
+    })
+  }
+
+  const fileUpdate = (update: LogUpdate) => {
+    setWatchedFiles(current => create(current, (draft) => updateDraft(draft, update)))
+  };
+
   useEffect(() => {
-    const updateCancel = EventsOn('file-update', (line: FileUpdate) => {
-      setWatchedFiles(current => {
-        const toUpdate = current[line.id]
-
-        if (!toUpdate) {
-          return current;
-        }
-        const logLine = GetLogMessage(line.line)
-        if (!logLine) {
-          return current
-        }
-        toUpdate.lines.push(logLine)
-
-        return { ...current, [line.id]: toUpdate }
-      })
-    })
-    const stoppedEventCancel = EventsOn('tail-stopped', (file: string) => {
-      console.log("Stopped watching file: " + file);
-    })
+    const updateCancel = EventsOn('file-update', fileUpdate)
     return () => {
       updateCancel();
-      stoppedEventCancel();
     }
   }, [])
 

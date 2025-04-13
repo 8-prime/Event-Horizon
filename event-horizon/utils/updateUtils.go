@@ -8,20 +8,26 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-func HandleLineChanges(ctx context.Context, updates chan models.FileUpdate) {
-	var updatedFiles []models.FileUpdate
+func HandleLineChanges(ctx context.Context, updates chan models.LineUpdate) {
+	lines := 0
+	updatedFiles := make(map[string][]string)
 	timer := time.NewTicker(1 * time.Second)
 	defer timer.Stop()
 
 	for {
 		select {
-		case newLine := <-updates:
-			updatedFiles = append(updatedFiles, newLine)
-		case <-timer.C:
-			for _, v := range updatedFiles {
-				runtime.EventsEmit(ctx, "file-update", v)
+		case fileUpdate := <-updates:
+			updatedFiles[fileUpdate.Id] = append(updatedFiles[fileUpdate.Id], fileUpdate.Line)
+			lines++
+			if lines > 100 {
+				runtime.EventsEmit(ctx, "file-update", updatedFiles)
+				updatedFiles = make(map[string][]string)
+				lines = 0
 			}
-			updatedFiles = nil
+			timer.Reset(100 * time.Millisecond)
+		case <-timer.C:
+			runtime.EventsEmit(ctx, "file-update", updatedFiles)
+			updatedFiles = make(map[string][]string)
 		}
 	}
 }

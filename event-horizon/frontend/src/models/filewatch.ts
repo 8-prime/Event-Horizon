@@ -5,10 +5,13 @@ export type FileWatchRepo = {
     [id: string]: FileWatch
 }
 
-
 export type FileWatch = {
     lines: LogMessage[],
     info: models.WatchInfo
+}
+
+export type LogUpdate = {
+    [id: string]: string[]
 }
 
 export type FileUpdate = {
