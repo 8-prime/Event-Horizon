@@ -26,6 +26,9 @@ func HandleLineChanges(ctx context.Context, updates chan models.LineUpdate) {
 			}
 			timer.Reset(100 * time.Millisecond)
 		case <-timer.C:
+			if lines == 0 {
+				continue
+			}
 			runtime.EventsEmit(ctx, "file-update", updatedFiles)
 			updatedFiles = make(map[string][]string)
 		}

@@ -61,7 +61,6 @@ func (a *App) SelectFile() (models.WatchInfo, error) {
 	return watched.GetInfo(), nil
 }
 
-// StartTailing begins tailing the selected file
 func startTailing(app *App, watched *models.WatchedFile, ctx context.Context) {
 	for {
 		select {
@@ -70,16 +69,17 @@ func startTailing(app *App, watched *models.WatchedFile, ctx context.Context) {
 				watched.Context,
 				"tail-stopped",
 				watched.Id,
-			) // Verify that viewing has stopped
+			)
 			return
 		case <-ctx.Done():
-			runtime.EventsEmit(ctx, "tail-stopped", watched.Id) //Verify that viewing has stopped
+			runtime.EventsEmit(ctx, "tail-stopped", watched.Id)
 			return
 		case line := <-watched.Tail.Lines:
 			if line.Err == nil {
-				runtime.EventsEmit(ctx, "read-error", watched.Id) //Show toast that reading for file had error
+				runtime.EventsEmit(ctx, "read-error", watched.Id)
 			}
 			fmt.Println("Read new line")
+			//Send update to be batched and sent to frontend
 			app.updatesChannel <- models.LineUpdate{
 				Id:   watched.Id,
 				Line: line.Text,
@@ -88,7 +88,6 @@ func startTailing(app *App, watched *models.WatchedFile, ctx context.Context) {
 	}
 }
 
-// StopTailing stops the current file tailing operation
 func (a *App) StopTailing(id string) {
 	a.watchedFiles = removeByIdAndStop(a.watchedFiles, id)
 }
