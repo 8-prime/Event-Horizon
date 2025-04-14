@@ -6,6 +6,8 @@ A desktop application for viewing Serilog log files in a tail-like fashion. Buil
 
 Because `tail -f` is great, but lacks structure. Event Horizon brings the power of Serilog's structured logging to your desktop in a convenient, real-time view.  Stop grepping, start *seeing*.
 
+![](./assets/demo.gif)
+
 ## Features
 
 *   **Real-time Log Viewing:**  Continuously monitors and displays new log entries as they are written.
