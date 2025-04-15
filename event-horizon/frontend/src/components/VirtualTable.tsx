@@ -13,6 +13,7 @@ import { TableCell, TableHead, TableRow } from "@/components/ui/table";
 import { HTMLAttributes, forwardRef, useState } from "react";
 import { TableVirtuoso } from "react-virtuoso";
 import { cn } from "@/lib/utils";
+import { LogMessage } from "@/models/filewatch";
 
 // Original Table is wrapped with a <div> (see https://ui.shadcn.com/docs/components/table#radix-:r24:-content-manual), 
 // but here we don't want it, so let's use a new component with only <table> tag
@@ -28,7 +29,7 @@ const TableComponent = forwardRef<
 ));
 TableComponent.displayName = "TableComponent";
 
-const TableRowComponent = <TData,>(rows: Row<TData>[], handleRowClick: (message: any) => void) =>
+const TableRowComponent = <TData,>(rows: Row<TData>[], handleRowClick: (message: any) => void, selectedLog: LogMessage | undefined) =>
     function getTableRow(props: HTMLAttributes<HTMLTableRowElement>) {
         // @ts-expect-error data-index is a valid attribute
         const index = props["data-index"];
@@ -39,8 +40,10 @@ const TableRowComponent = <TData,>(rows: Row<TData>[], handleRowClick: (message:
         return (
             <TableRow
                 key={row.id}
+                className={`${(row.original as any).id === selectedLog?.id ?
+                    "bg-neutral-300 hover:bg-neutral-200 "
+                    : "bg-neutral-50 hover:bg-neutral-200"}`}
                 onClick={() => handleRowClick(row.original)}
-                data-state={row.getIsSelected() && "selected"}
                 {...props}
             >
                 {row.getVisibleCells().map((cell) => (
@@ -71,13 +74,15 @@ interface DataTableProps<TData, TValue> {
     data: TData[];
     height: string;
     handleRowClick: (message: any) => void
+    selectedLog: LogMessage | undefined
 }
 
 export function DataTable<TData, TValue>({
     columns,
     data,
     height,
-    handleRowClick
+    handleRowClick,
+    selectedLog
 }: Readonly<DataTableProps<TData, TValue>>) {
     const [sorting, setSorting] = useState<SortingState>([]);
     const table = useReactTable({
@@ -100,7 +105,7 @@ export function DataTable<TData, TValue>({
                 totalCount={rows.length}
                 components={{
                     Table: TableComponent,
-                    TableRow: TableRowComponent(rows, handleRowClick),
+                    TableRow: TableRowComponent(rows, handleRowClick, selectedLog),
                 }}
                 fixedHeaderContent={() =>
                     table.getHeaderGroups().map((headerGroup) => (
