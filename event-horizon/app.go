@@ -75,10 +75,11 @@ func startTailing(app *App, watched *models.WatchedFile, ctx context.Context) {
 			runtime.EventsEmit(ctx, "tail-stopped", watched.Id)
 			return
 		case line := <-watched.Tail.Lines:
-			if line.Err == nil {
-				runtime.EventsEmit(ctx, "read-error", watched.Id)
+			if line.Err != nil {
+				// runtime.EventsEmit(ctx, "read-error", watched.Id)
+				fmt.Printf("Read line error: %v\n", line.Err)
+				continue
 			}
-			fmt.Println("Read new line")
 			//Send update to be batched and sent to frontend
 			app.updatesChannel <- models.LineUpdate{
 				Id:   watched.Id,
