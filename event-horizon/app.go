@@ -1,46 +1,22 @@
 package main
 
 import (
-	"context"
+	"event-horizon/models"
+	"event-horizon/utils"
 	"fmt"
-	"path/filepath"
+
+	"context"
 
 	"github.com/google/uuid"
 	"github.com/nxadm/tail"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-type FileUpdate struct {
-	Id   string `json:"id"`
-	Line string `json:"line"`
-}
-
-type WatchInfo struct {
-	Id       string `json:"id"`
-	FilePath string `json:"filePath"`
-	FileName string `json:"fileName"`
-}
-
-type WatchedFile struct {
-	Id       string
-	FilePath string
-	Tail     *tail.Tail
-	Context  context.Context
-	Cancel   context.CancelFunc
-}
-
-func (w *WatchedFile) GetInfo() WatchInfo {
-	return WatchInfo{
-		Id:       w.Id,
-		FilePath: w.FilePath,
-		FileName: filepath.Base(w.FilePath),
-	}
-}
-
 // App struct
 type App struct {
-	ctx          context.Context
-	watchedFiles []WatchedFile
+	ctx            context.Context
+	watchedFiles   []models.WatchedFile
+	updatesChannel chan models.LineUpdate
 }
 
 // NewApp creates a new App application struct
@@ -52,12 +28,13 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	a.updatesChannel = make(chan models.LineUpdate)
+
+	go utils.HandleLineChanges(a.ctx, a.updatesChannel)
 }
 
-func (a *App) SelectFile() (WatchInfo, error) {
-	// Open file selection dialog
-
-	watched := WatchedFile{
+func (a *App) SelectFile() (models.WatchInfo, error) {
+	watched := models.WatchedFile{
 		Id: uuid.New().String(),
 	}
 
@@ -80,13 +57,11 @@ func (a *App) SelectFile() (WatchInfo, error) {
 	watched.Tail = t
 	watched.Context, watched.Cancel = context.WithCancel(a.ctx)
 	a.watchedFiles = append(a.watchedFiles, watched)
-	go startTailing(&watched, a.ctx)
+	go startTailing(a, &watched, a.ctx)
 	return watched.GetInfo(), nil
 }
 
-// StartTailing begins tailing the selected file
-func startTailing(watched *WatchedFile, ctx context.Context) {
-	// defer watched.Tail.Stop()
+func startTailing(app *App, watched *models.WatchedFile, ctx context.Context) {
 	for {
 		select {
 		case <-watched.Context.Done():
@@ -94,30 +69,30 @@ func startTailing(watched *WatchedFile, ctx context.Context) {
 				watched.Context,
 				"tail-stopped",
 				watched.Id,
-			) // Verify that viewing has stopped
+			)
 			return
 		case <-ctx.Done():
-			runtime.EventsEmit(ctx, "tail-stopped", watched.Id) //Verify that viewing has stopped
+			runtime.EventsEmit(ctx, "tail-stopped", watched.Id)
 			return
 		case line := <-watched.Tail.Lines:
 			if line.Err == nil {
-				runtime.EventsEmit(ctx, "read-error", watched.Id) //Show toast that reading for file had error
+				runtime.EventsEmit(ctx, "read-error", watched.Id)
 			}
 			fmt.Println("Read new line")
-			runtime.EventsEmit(ctx, "file-update", FileUpdate{
+			//Send update to be batched and sent to frontend
+			app.updatesChannel <- models.LineUpdate{
 				Id:   watched.Id,
 				Line: line.Text,
-			})
+			}
 		}
 	}
 }
 
-// StopTailing stops the current file tailing operation
 func (a *App) StopTailing(id string) {
 	a.watchedFiles = removeByIdAndStop(a.watchedFiles, id)
 }
 
-func removeByIdAndStop(slice []WatchedFile, id string) []WatchedFile {
+func removeByIdAndStop(slice []models.WatchedFile, id string) []models.WatchedFile {
 	for i, item := range slice {
 		if item.Id == id {
 			item.Cancel()

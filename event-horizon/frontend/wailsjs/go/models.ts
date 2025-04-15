@@ -1,4 +1,4 @@
-export namespace main {
+export namespace models {
 	
 	export class WatchInfo {
 	    id: string;

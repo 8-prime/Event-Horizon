@@ -1,4 +1,4 @@
-import { FileWatch, LogMessage } from "@/models/filewatch"
+import { FileWatch, FileWatchRepo, LogMessage } from "@/models/filewatch"
 import { Button } from "./ui/button"
 import { FileText, Upload, X } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
@@ -9,7 +9,7 @@ import { DataTable } from "./VirtualTable"
 import { columns } from "./TableColumns"
 
 export type LogFileTableProps = {
-    watchedFiles: FileWatch[]
+    watchedFiles: FileWatchRepo
     activeTabId: string
     removeFile: (id: string) => void
     setActiveTab: (id: string) => void
@@ -24,12 +24,11 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
     const [childHeight, setChildHeight] = useState<string>('auto');
     const [selectedLog, setSelectedLog] = useState<LogMessage | undefined>();
 
-    const activeTab = useMemo(() => {
-        return watchedFiles.find(w => w.info.id === activeTabId)
-    }, [watchedFiles, search, activeTabId])
-
-
     const filterFunction = (message: LogMessage, search: string) => {
+        if (!search) {
+            return true;
+        }
+
         const templatecontains = message.messageTemplate.toLowerCase().includes(search)
         const keys = Object.keys(message.properties)
         const propcontains = keys.some(k => {
@@ -40,13 +39,15 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
         return propcontains || templatecontains;
     }
 
-    const filteredFileWatch = useMemo(() => {
+    const activeTab = useMemo(() => {
+        console.log("setting active tab");
+        const wf = watchedFiles[activeTabId]
         const loweredSearch = search.toLowerCase()
         return {
-            ...activeTab,
-            lines: activeTab?.lines.filter(l => filterFunction(l, loweredSearch))
+            ...wf,
+            lines: wf.lines.filter(l => filterFunction(l, loweredSearch))
         } as FileWatch
-    }, [activeTab, search]);
+    }, [watchedFiles, activeTabId, search])
 
     useEffect(() => {
         if (!scrollRef.current) return;
@@ -83,7 +84,7 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
             <div className="flex items-start border rounded-lg overflow-x-auto">
                 <div className="flex-grow flex bg-transparent h-auto p-1">
                     <div className="grow flex justify-start items-center gap-2">
-                        {watchedFiles.map((watchedFile) => (
+                        {Object.entries(watchedFiles).map(([_, watchedFile]) => (
                             <div
                                 key={watchedFile.info.id}
                                 className={cn(
@@ -116,8 +117,8 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
                 </div>
             </div>
 
-            {filteredFileWatch !== undefined &&
-                <div key={filteredFileWatch.info.id} className="mt-4 flex-1 flex flex-col overflow-hidden">
+            {activeTab !== undefined &&
+                <div key={activeTab.info.id} className="mt-4 flex-1 flex flex-col overflow-hidden">
                     <div className="flex flex-col h-full gap-4">
                         <Input
                             placeholder="Search logs..."
@@ -133,7 +134,7 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
                                     selectedLog ? "md:w-2/3" : "w-full",
                                 )}
                             >
-                                <DataTable data={filteredFileWatch.lines} height={childHeight} columns={columns} handleRowClick={handleRowClick} />
+                                <DataTable data={activeTab.lines} height={childHeight} columns={columns} handleRowClick={handleRowClick} />
                             </div>
                             {/* Details panel */}
                             <DetailsPanel logMessage={selectedLog} setSelectedLog={setSelectedLog} />

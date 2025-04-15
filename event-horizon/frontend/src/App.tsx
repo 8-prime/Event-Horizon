@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { SelectFile, StopTailing } from "../wailsjs/go/main/App";
 import { EventsOn } from "../wailsjs/runtime";
-import { FileUpdate, FileWatch, GetLogMessage } from './models/filewatch';
+import { FileWatch, FileWatchRepo, GetLogMessage, LogUpdate } from './models/filewatch';
 import NoFile from './components/NoFile';
 import LogFileTable from './components/LogFileTable';
 import { Toaster } from './components/ui/sonner';
-import { toast } from 'sonner';
+import { create } from 'mutative';
+
 
 function App() {
-  const [watchedFiles, setWatchedFiles] = useState<FileWatch[]>([])
+  const [watchedFiles, setWatchedFiles] = useState<FileWatchRepo>({})
   const [activeTab, setActiveTab] = useState<string>("");
 
   const selectFile = () => {
@@ -17,46 +18,42 @@ function App() {
         lines: [],
         info: wi
       }
-      setWatchedFiles([...watchedFiles, fi])
+      setWatchedFiles({ ...watchedFiles, [fi.info.id]: fi })
       setActiveTab(fi.info.id)
     })
   }
 
   const removeFile = (id: string) => {
     StopTailing(id).then(() => {
-      setWatchedFiles(watchedFiles.filter(f => f.info.id != id))
+      const { [id]: _, ...newWatchedFiles } = watchedFiles;
+      setWatchedFiles(newWatchedFiles)
     })
   }
 
+  const updateDraft = (draft: FileWatchRepo, update: LogUpdate) => {
+    Object.entries(update).forEach(([id, lines]) => {
+      const mapped = lines
+        .map(line => GetLogMessage(line))
+        .filter(l => l !== undefined);
+      draft[id].lines = draft[id].lines.concat(mapped)
+    })
+  }
+
+  const fileUpdate = (update: LogUpdate) => {
+    setWatchedFiles(current => create(current, (draft) => updateDraft(draft, update)))
+  };
+
   useEffect(() => {
-    const updateCancel = EventsOn('file-update', (line: FileUpdate) => {
-      setWatchedFiles(current => {
-        return current.map(watched => {
-          if (watched.info.id != line.id) {
-            return watched
-          }
-          const newLog = GetLogMessage(line.line)
-          if (!newLog) {
-            toast("Invalid log format")
-            return watched;
-          }
-          return { ...watched, lines: [...watched.lines, newLog] }
-        })
-      })
-    })
-    const stoppedEventCancel = EventsOn('tail-stopped', (file: string) => {
-      console.log("Stopped watching file: " + file);
-    })
+    const updateCancel = EventsOn('file-update', fileUpdate)
     return () => {
       updateCancel();
-      stoppedEventCancel();
     }
   }, [])
 
   return (
     <div className="h-screen flex flex-col overflow-hidden p-4">
       <Toaster />
-      {watchedFiles.length > 0 ? (
+      {Object.keys(watchedFiles).length > 0 ? (
         <LogFileTable activeTabId={activeTab} setActiveTab={setActiveTab} removeFile={removeFile} watchedFiles={watchedFiles} selectFile={selectFile} />
       ) : (
         <NoFile selectFile={selectFile} />
