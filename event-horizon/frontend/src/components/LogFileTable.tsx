@@ -134,7 +134,7 @@ const LogFileTable = ({ watchedFiles, activeTabId, removeFile, setActiveTab, sel
                                     selectedLog ? "md:w-2/3" : "w-full",
                                 )}
                             >
-                                <DataTable data={activeTab.lines} height={childHeight} columns={columns} handleRowClick={handleRowClick} />
+                                <DataTable data={activeTab.lines} height={childHeight} columns={columns} handleRowClick={handleRowClick} selectedLog={selectedLog} />
                             </div>
                             {/* Details panel */}
                             <DetailsPanel logMessage={selectedLog} setSelectedLog={setSelectedLog} />
