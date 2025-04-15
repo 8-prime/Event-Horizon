@@ -96,7 +96,7 @@ export const GetLogMessage = (line: string): LogMessage | undefined => {
         return {
             id: uuidv4(),
             timestamp: compactJson['@t'] ?? "-",
-            level: compactJson['@l'] ?? "-",
+            level: compactJson['@l'] ?? "Information",
             messageTemplate: compactJson['@mt'] ?? "-",
             properties: properties,
             sourceContext: compactJson.SourceContext,
