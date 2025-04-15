@@ -31,6 +31,7 @@ func HandleLineChanges(ctx context.Context, updates chan models.LineUpdate) {
 			}
 			runtime.EventsEmit(ctx, "file-update", updatedFiles)
 			updatedFiles = make(map[string][]string)
+			lines = 0
 		}
 	}
 }
