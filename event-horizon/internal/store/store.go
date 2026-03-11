@@ -20,6 +20,7 @@ type FileMetadata struct {
 
 type file struct {
 	mu       sync.RWMutex
+	counter  atomic.Uint32
 	fileID   string
 	path     string
 	name     string
@@ -27,19 +28,18 @@ type file struct {
 	propKeys map[string]struct{}
 }
 
+func (f *file) nextID() uint32 {
+	return f.counter.Add(1)
+}
+
 // Store holds all loaded log files.
 type Store struct {
-	mu      sync.RWMutex
-	files   map[string]*file
-	counter atomic.Uint32
+	mu    sync.RWMutex
+	files map[string]*file
 }
 
 func NewStore() *Store {
 	return &Store{files: make(map[string]*file)}
-}
-
-func (s *Store) nextID() uint32 {
-	return s.counter.Add(1)
 }
 
 // LoadFile reads and parses a CLEF file, adding it to the store.
@@ -69,7 +69,7 @@ func (s *Store) LoadFile(path string) (FileMetadata, error) {
 	scanner.Buffer(make([]byte, 1024*1024), 1024*1024)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if entry, ok := ParseCLEF(line, s.nextID(), idx); ok {
+		if entry, ok := ParseCLEF(line, fl.nextID(), idx); ok {
 			for k := range entry.Props {
 				fl.propKeys[k] = struct{}{}
 			}
@@ -146,9 +146,15 @@ func (s *Store) RemoveFile(fileID string) {
 	s.mu.Unlock()
 }
 
-// NextID exposes the ID counter for the watcher.
-func (s *Store) NextID() uint32 {
-	return s.nextID()
+// NextFileID returns the next entry ID for a specific file.
+func (s *Store) NextFileID(fileID string) uint32 {
+	s.mu.RLock()
+	fl, ok := s.files[fileID]
+	s.mu.RUnlock()
+	if !ok {
+		return 0
+	}
+	return fl.nextID()
 }
 
 // FileIdx returns the idx for a fileID (0 if not found).
