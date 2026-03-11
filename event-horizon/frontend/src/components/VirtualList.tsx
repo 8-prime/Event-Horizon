@@ -51,12 +51,8 @@ export default function VirtualList({ entries, fileName, query, onPropFilter }: 
     visibleItems.push(
       <div
         key={entry.id}
-        style={{
-          position: 'absolute',
-          top: positions[i],
-          left: 0,
-          right: 0,
-        }}
+        className="absolute left-0 right-0"
+        style={{ top: positions[i] }}
       >
         <LogRow
           entry={entry}
@@ -71,13 +67,9 @@ export default function VirtualList({ entries, fileName, query, onPropFilter }: 
   return (
     <div
       ref={containerRef}
-      style={{
-        flex: 1,
-        overflowY: 'auto',
-        position: 'relative',
-      }}
+      className="flex-1 overflow-y-auto relative"
     >
-      <div style={{ height: totalHeight, position: 'relative' }}>
+      <div className="relative" style={{ height: totalHeight }}>
         {visibleItems}
       </div>
     </div>

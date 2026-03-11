@@ -11,7 +11,6 @@ interface Props {
   fileName: string
   query: string
   onPropFilter: (key: string, value: string) => void
-  style?: React.CSSProperties
 }
 
 function highlight(text: string, query: string): React.ReactNode {
@@ -21,7 +20,7 @@ function highlight(text: string, query: string): React.ReactNode {
   return (
     <>
       {text.slice(0, idx)}
-      <mark style={{ background: '#854d0e', color: '#fef3c7', borderRadius: '2px' }}>
+      <mark className="bg-[#854d0e] text-amber-100 rounded-[2px]">
         {text.slice(idx, idx + query.length)}
       </mark>
       {text.slice(idx + query.length)}
@@ -29,7 +28,7 @@ function highlight(text: string, query: string): React.ReactNode {
   )
 }
 
-function LogRow({ entry, fileName, query, onPropFilter, style }: Props) {
+function LogRow({ entry, fileName, query, onPropFilter }: Props) {
   const [expanded, setExpanded] = useState(false)
   const props = entry.props ?? {}
   const propEntries = Object.entries(props)
@@ -43,67 +42,26 @@ function LogRow({ entry, fileName, query, onPropFilter, style }: Props) {
 
   return (
     <div
-      style={{
-        background: expanded ? '#111' : 'transparent',
-        borderBottom: '1px solid #0d0d0d',
-        cursor: 'pointer',
-        ...style,
-      }}
+      className={`border-b border-[#0d0d0d] cursor-pointer ${expanded ? 'bg-[#111]' : 'bg-transparent hover:bg-[#0d0d0d]'}`}
       onClick={toggle}
-      onMouseEnter={e => { if (!expanded) e.currentTarget.style.background = '#0d0d0d' }}
-      onMouseLeave={e => { if (!expanded) e.currentTarget.style.background = 'transparent' }}
     >
       {/* Collapsed row */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '0 12px',
-        height: '32px',
-        overflow: 'hidden',
-      }}>
-        <span style={{
-          width: '170px',
-          flexShrink: 0,
-          fontSize: '12px',
-          color: '#737c8a',
-          fontVariantNumeric: 'tabular-nums',
-          whiteSpace: 'nowrap',
-        }}>
+      <div className="flex items-center gap-2 px-3 h-8 overflow-hidden">
+        <span className="w-[170px] shrink-0 text-[11px] text-[#737c8a] tabular-nums whitespace-nowrap">
           {tsStr}
         </span>
         <LevelBadge level={entry.lvl} />
-        <span style={{
-          flex: 1,
-          fontSize: '13px',
-          color: '#d1d5db',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}>
+        <span className="flex-1 text-[13px] text-gray-300 whitespace-nowrap overflow-hidden text-ellipsis">
           {highlight(entry.msg, query)}
         </span>
-        <span style={{
-          fontSize: '11px',
-          color: '#737c8a',
-          flexShrink: 0,
-          whiteSpace: 'nowrap',
-        }}>
+        <span className="text-[11px] text-[#737c8a] shrink-0 whitespace-nowrap">
           {fileName}
         </span>
       </div>
 
       {/* Inline props row (collapsed only) */}
       {!expanded && inlineProps.length > 0 && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px',
-          padding: '2px 12px 4px',
-          paddingLeft: '206px', // aligns under message (170+8+badge+8)
-          flexWrap: 'nowrap',
-          overflow: 'hidden',
-        }}>
+        <div className="flex items-center gap-1 pt-0.5 px-3 pb-1 pl-[206px] flex-nowrap overflow-hidden">
           {inlineProps.map(([k, v]) => (
             <PropPill
               key={k}
@@ -113,7 +71,7 @@ function LogRow({ entry, fileName, query, onPropFilter, style }: Props) {
             />
           ))}
           {extraCount > 0 && (
-            <span style={{ fontSize: '11px', color: '#4b5563', flexShrink: 0 }}>
+            <span className="text-[11px] text-gray-600 shrink-0">
               +{extraCount} more
             </span>
           )}
@@ -122,22 +80,16 @@ function LogRow({ entry, fileName, query, onPropFilter, style }: Props) {
 
       {/* Expanded view */}
       {expanded && (
-        <div style={{
-          margin: '0 12px 8px',
-          background: '#0a0a0a',
-          border: '1px solid #1a1a1a',
-          borderRadius: '4px',
-          padding: '10px 12px',
-          fontSize: '12px',
-        }}
+        <div
+          className="mx-3 mb-2 bg-[#0a0a0a] border border-[#1a1a1a] rounded-[4px] py-2.5 px-3 text-[12px]"
           onClick={e => e.stopPropagation()}
         >
           {propEntries.length > 0 && (
-            <section style={{ marginBottom: '8px' }}>
-              <div style={{ color: '#4b5563', fontSize: '11px', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            <section className="mb-2">
+              <div className="text-gray-600 text-[11px] font-semibold mb-1.5 tracking-[0.08em] uppercase">
                 Properties
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+              <div className="flex flex-wrap gap-1">
                 {propEntries.map(([k, v]) => (
                   <PropPill
                     key={k}
@@ -151,39 +103,21 @@ function LogRow({ entry, fileName, query, onPropFilter, style }: Props) {
           )}
 
           {entry.ex && (
-            <section style={{ marginBottom: '8px' }}>
-              <div style={{ color: '#4b5563', fontSize: '11px', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            <section className="mb-2">
+              <div className="text-gray-600 text-[11px] font-semibold mb-1.5 tracking-[0.08em] uppercase">
                 Exception
               </div>
-              <pre style={{
-                margin: 0,
-                color: '#f87171',
-                fontSize: '11px',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-all',
-                background: '#0d0d0d',
-                padding: '8px',
-                borderRadius: '3px',
-              }}>
+              <pre className="m-0 text-red-400 text-[11px] whitespace-pre-wrap break-all bg-[#0d0d0d] p-2 rounded-[3px]">
                 {entry.ex}
               </pre>
             </section>
           )}
 
           <section>
-            <div style={{ color: '#4b5563', fontSize: '11px', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            <div className="text-gray-600 text-[11px] font-semibold mb-1.5 tracking-[0.08em] uppercase">
               Raw
             </div>
-            <pre style={{
-              margin: 0,
-              color: '#6b7280',
-              fontSize: '11px',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-all',
-              background: '#0d0d0d',
-              padding: '8px',
-              borderRadius: '3px',
-            }}>
+            <pre className="m-0 text-gray-500 text-[11px] whitespace-pre-wrap break-all bg-[#0d0d0d] p-2 rounded-[3px]">
               {JSON.stringify(entry, null, 2)}
             </pre>
           </section>

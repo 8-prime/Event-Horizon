@@ -152,19 +152,10 @@ export default function App() {
   const filteredCount = displayedEntries.length
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#080808', overflow: 'hidden' }}>
+    <div className="flex flex-col h-screen bg-[#080808] overflow-hidden">
       {/* Header */}
-      <header style={{
-        height: '48px',
-        background: '#050505',
-        borderBottom: '1px solid #111',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        padding: '0 16px',
-        flexShrink: 0,
-      }}>
-        <span style={{ fontWeight: 700, fontSize: '14px', color: '#e5e7eb', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
+      <header className="h-12 bg-[#050505] border-b border-[#111] flex items-center gap-3 px-4 shrink-0">
+        <span className="font-bold text-sm text-gray-200 tracking-[0.05em] whitespace-nowrap">
           Event Horizon
         </span>
 
@@ -172,41 +163,21 @@ export default function App() {
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           placeholder="Search messages…"
-          style={{
-            flex: 1,
-            maxWidth: '480px',
-            background: '#0d0d0d',
-            border: '1px solid #1f1f1f',
-            borderRadius: '6px',
-            color: '#d1d5db',
-            fontSize: '13px',
-            padding: '5px 12px',
-            outline: 'none',
-            fontFamily: 'inherit',
-          }}
+          className="flex-1 max-w-[480px] bg-[#0d0d0d] border border-[#1f1f1f] rounded-md text-gray-300 text-[13px] px-3 py-[5px] outline-none font-[inherit]"
         />
 
-        <div style={{ flex: 1 }} />
+        <div className="flex-1" />
 
         {/* File tabs */}
         {files.map(fi => (
           <button
             key={fi.fileId}
             onClick={() => setActiveFileId(fi.fileId)}
-            style={{
-              background: activeFileId === fi.fileId ? '#1a1a1a' : 'transparent',
-              border: activeFileId === fi.fileId ? '1px solid #2a2a2a' : '1px solid transparent',
-              borderRadius: '4px',
-              color: activeFileId === fi.fileId ? '#e5e7eb' : '#6b7280',
-              fontSize: '12px',
-              padding: '3px 10px',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              maxWidth: '160px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
+            className={`border rounded px-[10px] py-[3px] text-xs cursor-pointer font-[inherit] max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap ${
+              activeFileId === fi.fileId
+                ? 'bg-[#1a1a1a] border-[#2a2a2a] text-gray-200'
+                : 'bg-transparent border-transparent text-gray-500'
+            }`}
             title={fi.name}
           >
             {fi.name}
@@ -215,25 +186,14 @@ export default function App() {
 
         <button
           onClick={openFiles}
-          style={{
-            background: '#1a1a1a',
-            border: '1px solid #2a2a2a',
-            borderRadius: '6px',
-            color: '#9ca3af',
-            fontSize: '12px',
-            padding: '5px 12px',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            flexShrink: 0,
-            whiteSpace: 'nowrap',
-          }}
+          className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-md text-gray-400 text-xs px-3 py-[5px] cursor-pointer font-[inherit] shrink-0 whitespace-nowrap"
         >
           Open files
         </button>
       </header>
 
       {/* Body */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div className="flex-1 flex overflow-hidden">
         {files.length > 0 && (
           <Sidebar
             files={files}
@@ -257,61 +217,28 @@ export default function App() {
 
         {/* Main pane */}
         <div
-          style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            outline: isDragging ? '2px solid #22c55e' : 'none',
-            outlineOffset: '-2px',
-          }}
+          className={`flex-1 flex flex-col overflow-hidden ${isDragging ? 'outline outline-2 outline-green-500 -outline-offset-2' : ''}`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
           {files.length === 0 ? (
             /* Empty state */
-            <div style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '16px',
-              color: '#374151',
-              userSelect: 'none',
-            }}>
+            <div className="flex-1 flex flex-col items-center justify-center gap-4 text-gray-700 select-none">
               <svg width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
               </svg>
-              <div style={{ fontSize: '14px' }}>Drop log files here or click Open files</div>
+              <div className="text-sm">Drop log files here or click Open files</div>
               <button
                 onClick={openFiles}
-                style={{
-                  background: '#111',
-                  border: '1px solid #2a2a2a',
-                  borderRadius: '6px',
-                  color: '#9ca3af',
-                  fontSize: '13px',
-                  padding: '8px 20px',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                }}
+                className="bg-[#111] border border-[#2a2a2a] rounded-md text-gray-400 text-[13px] px-5 py-2 cursor-pointer font-[inherit]"
               >
                 Open files
               </button>
             </div>
           ) : activeFileId && displayedEntries.length === 0 ? (
             /* Zero results */
-            <div style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '32px',
-              color: '#374151',
-              userSelect: 'none',
-            }}>
+            <div className="flex-1 flex items-center justify-center text-[32px] text-gray-700 select-none">
               ∅
             </div>
           ) : activeFileId ? (
@@ -331,14 +258,7 @@ export default function App() {
               />
             </>
           ) : (
-            <div style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#374151',
-              fontSize: '13px',
-            }}>
+            <div className="flex-1 flex items-center justify-center text-gray-700 text-[13px]">
               Select a file tab above
             </div>
           )}

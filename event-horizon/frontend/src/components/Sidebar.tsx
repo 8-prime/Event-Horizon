@@ -73,29 +73,13 @@ export default function Sidebar(props: Props) {
     onTimeChange((now - ms) * 1_000_000, now * 1_000_000)
   }
 
-  const sectionLabel: React.CSSProperties = {
-    fontSize: '10px',
-    fontWeight: 700,
-    letterSpacing: '0.1em',
-    textTransform: 'uppercase',
-    color: '#4b5563',
-    marginBottom: '8px',
-  }
+  const sectionLabelClass = 'text-[10px] font-bold tracking-[0.1em] uppercase text-gray-600 mb-2'
 
   return (
-    <div style={{
-      width: '252px',
-      flexShrink: 0,
-      background: '#060606',
-      borderRight: '1px solid #111',
-      display: 'flex',
-      flexDirection: 'column',
-      overflowY: 'auto',
-      overflowX: 'hidden',
-    }}>
+    <div className="w-[252px] shrink-0 bg-[#060606] border-r border-[#111] flex flex-col overflow-y-auto overflow-x-hidden">
       {/* LEVEL */}
-      <section style={{ padding: '12px', borderBottom: '1px solid #111' }}>
-        <div style={sectionLabel}>Level</div>
+      <section className="p-3 border-b border-[#111]">
+        <div className={sectionLabelClass}>Level</div>
         {LEVELS.map((name, idx) => {
           const cfg = LEVEL_CONFIG[name]
           const count = levelCounts[idx] ?? 0
@@ -104,50 +88,28 @@ export default function Sidebar(props: Props) {
             <div
               key={name}
               onClick={() => onToggleLevel(idx)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '4px 6px',
-                borderRadius: '3px',
-                cursor: 'pointer',
-                opacity: active ? 1 : 0.35,
-                userSelect: 'none',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = '#0d0d0d'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              className={`flex items-center gap-2 py-1 px-1.5 rounded-[3px] cursor-pointer select-none hover:bg-[#0d0d0d] ${active ? 'opacity-100' : 'opacity-[0.35]'}`}
             >
-              <span style={{
-                width: '8px', height: '8px',
-                borderRadius: '50%',
-                background: cfg.color,
-                flexShrink: 0,
-              }} />
-              <span style={{ flex: 1, fontSize: '12px', color: '#d1d5db' }}>{cfg.label}</span>
-              <span style={{ fontSize: '11px', color: '#4b5563' }}>{count}</span>
+              <span
+                className="size-2 rounded-full shrink-0"
+                style={{ background: cfg.color }}
+              />
+              <span className="flex-1 text-xs text-gray-300">{cfg.label}</span>
+              <span className="text-[11px] text-gray-600">{count}</span>
             </div>
           )
         })}
       </section>
 
       {/* TIME RANGE */}
-      <section style={{ padding: '12px', borderBottom: '1px solid #111' }}>
-        <div style={sectionLabel}>Time Range</div>
-        <div style={{ display: 'flex', gap: '4px', marginBottom: '8px', flexWrap: 'wrap' }}>
+      <section className="p-3 border-b border-[#111]">
+        <div className={sectionLabelClass}>Time Range</div>
+        <div className="flex gap-1 mb-2 flex-wrap">
           {TIME_PRESETS.map(p => (
             <button
               key={p.label}
               onClick={() => handlePreset(p.ms)}
-              style={{
-                background: '#111',
-                border: '1px solid #2a2a2a',
-                borderRadius: '3px',
-                color: '#9ca3af',
-                fontSize: '11px',
-                padding: '2px 7px',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-              }}
+              className="bg-[#111] border border-[#2a2a2a] rounded-[3px] text-gray-400 text-[11px] px-[7px] py-0.5 cursor-pointer font-[inherit]"
             >
               {p.label}
             </button>
@@ -155,77 +117,47 @@ export default function Sidebar(props: Props) {
           {(timeFrom || timeTo) && (
             <button
               onClick={() => onTimeChange(undefined, undefined)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#4b5563',
-                fontSize: '11px',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                padding: '2px 4px',
-              }}
+              className="bg-transparent border-none text-gray-600 text-[11px] cursor-pointer font-[inherit] px-1 py-0.5"
             >
               Clear
             </button>
           )}
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div className="flex flex-col gap-1">
           <input
             type="datetime-local"
             value={timeFrom ? nsToDatetimeLocal(timeFrom) : ''}
             onChange={e => onTimeChange(e.target.value ? datetimeLocalToNs(e.target.value) : undefined, timeTo)}
             placeholder="From"
-            style={{
-              background: '#0d0d0d',
-              border: '1px solid #2a2a2a',
-              borderRadius: '4px',
-              color: '#d1d5db',
-              fontSize: '11px',
-              padding: '4px 6px',
-              fontFamily: 'inherit',
-              colorScheme: 'dark',
-              width: '100%',
-              boxSizing: 'border-box',
-            }}
+            className="bg-[#0d0d0d] border border-[#2a2a2a] rounded text-gray-300 text-[11px] px-1.5 py-1 font-[inherit] [color-scheme:dark] w-full"
           />
           <input
             type="datetime-local"
             value={timeTo ? nsToDatetimeLocal(timeTo) : ''}
             onChange={e => onTimeChange(timeFrom, e.target.value ? datetimeLocalToNs(e.target.value) : undefined)}
             placeholder="To"
-            style={{
-              background: '#0d0d0d',
-              border: '1px solid #2a2a2a',
-              borderRadius: '4px',
-              color: '#d1d5db',
-              fontSize: '11px',
-              padding: '4px 6px',
-              fontFamily: 'inherit',
-              colorScheme: 'dark',
-              width: '100%',
-              boxSizing: 'border-box',
-            }}
+            className="bg-[#0d0d0d] border border-[#2a2a2a] rounded text-gray-300 text-[11px] px-1.5 py-1 font-[inherit] [color-scheme:dark] w-full"
           />
         </div>
       </section>
 
       {/* PROPERTY FILTERS */}
-      <section style={{ padding: '12px', borderBottom: '1px solid #111' }}>
-        <div style={sectionLabel}>Property Filters</div>
+      <section className="p-3 border-b border-[#111]">
+        <div className={sectionLabelClass}>Property Filters</div>
 
         {propFilters.map((pf, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
-            <span style={{ fontSize: '11px', color: '#9ca3af', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div key={i} className="flex items-center gap-1 mb-1">
+            <span className="text-[11px] text-gray-400 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
               {pf.key} {pf.op} {pf.value}
             </span>
             <button
               onClick={() => onRemovePropFilter(i)}
-              style={{ background: 'none', border: 'none', color: '#4b5563', cursor: 'pointer', fontSize: '14px', padding: '0 2px', fontFamily: 'inherit' }}
+              className="bg-transparent border-none text-gray-600 cursor-pointer text-sm px-0.5 font-[inherit]"
             >×</button>
           </div>
         ))}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+        <div className="flex flex-col gap-1 mt-1">
           <AutoInput
             value={newPfKey}
             onChange={setNewPfKey}
@@ -235,16 +167,7 @@ export default function Sidebar(props: Props) {
           <select
             value={newPfOp}
             onChange={e => setNewPfOp(e.target.value)}
-            style={{
-              background: '#0d0d0d',
-              border: '1px solid #2a2a2a',
-              borderRadius: '4px',
-              color: '#d1d5db',
-              fontSize: '12px',
-              padding: '4px 6px',
-              fontFamily: 'inherit',
-              colorScheme: 'dark',
-            }}
+            className="bg-[#0d0d0d] border border-[#2a2a2a] rounded text-gray-300 text-xs px-1.5 py-1 font-[inherit] [color-scheme:dark]"
           >
             <option value="=">=</option>
             <option value="!=">!=</option>
@@ -264,39 +187,21 @@ export default function Sidebar(props: Props) {
           )}
           <button
             onClick={handleAddProp}
-            style={{
-              background: '#1a1a1a',
-              border: '1px solid #2a2a2a',
-              borderRadius: '4px',
-              color: '#9ca3af',
-              fontSize: '12px',
-              padding: '4px 8px',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              textAlign: 'left',
-            }}
+            className="bg-[#1a1a1a] border border-[#2a2a2a] rounded text-gray-400 text-xs px-2 py-1 cursor-pointer font-[inherit] text-left"
           >
             + Add filter
           </button>
         </div>
 
         {propKeysSuggestions.length > 0 && (
-          <div style={{ marginTop: '10px' }}>
-            <div style={{ fontSize: '10px', color: '#374151', marginBottom: '4px' }}>Known keys</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
+          <div className="mt-2.5">
+            <div className="text-[10px] text-gray-700 mb-1">Known keys</div>
+            <div className="flex flex-wrap gap-[3px]">
               {propKeysSuggestions.slice(0, 20).map(k => (
                 <span
                   key={k}
                   onClick={() => setNewPfKey(k)}
-                  style={{
-                    fontSize: '10px',
-                    color: '#6b7280',
-                    background: '#111',
-                    border: '1px solid #1a1a1a',
-                    borderRadius: '3px',
-                    padding: '1px 5px',
-                    cursor: 'pointer',
-                  }}
+                  className="text-[10px] text-gray-500 bg-[#111] border border-[#1a1a1a] rounded-[3px] px-[5px] py-px cursor-pointer"
                 >
                   {k}
                 </span>
@@ -307,50 +212,28 @@ export default function Sidebar(props: Props) {
       </section>
 
       {/* FILES */}
-      <section style={{ padding: '12px', flex: 1 }}>
-        <div style={sectionLabel}>Files</div>
+      <section className="p-3 flex-1">
+        <div className={sectionLabelClass}>Files</div>
         {files.map(fi => (
-          <div key={fi.fileId} style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '4px 6px',
-            borderRadius: '3px',
-            marginBottom: '2px',
-          }}>
+          <div key={fi.fileId} className="flex items-center gap-1.5 py-1 px-1.5 rounded-[3px] mb-0.5">
             <span
               onClick={() => onToggleFile(fi.fileId)}
-              style={{
-                flex: 1,
-                fontSize: '12px',
-                color: fi.visible ? '#d1d5db' : '#4b5563',
-                cursor: 'pointer',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
+              className={`flex-1 text-xs cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap ${fi.visible ? 'text-gray-300' : 'text-gray-600'}`}
               title={fi.name}
             >
               {fi.name}
             </span>
-            <span style={{ fontSize: '11px', color: '#374151', flexShrink: 0 }}>{fi.total}</span>
+            <span className="text-[11px] text-gray-700 shrink-0">{fi.total}</span>
             <button
               onClick={() => onCloseFile(fi.fileId)}
-              style={{ background: 'none', border: 'none', color: '#374151', cursor: 'pointer', fontSize: '14px', padding: '0', fontFamily: 'inherit' }}
+              className="bg-transparent border-none text-gray-700 cursor-pointer text-sm p-0 font-[inherit]"
             >×</button>
           </div>
         ))}
       </section>
 
       {/* Entry count footer */}
-      <div style={{
-        padding: '8px 12px',
-        borderTop: '1px solid #111',
-        fontSize: '11px',
-        color: '#4b5563',
-        textAlign: 'right',
-        flexShrink: 0,
-      }}>
+      <div className="px-3 py-2 border-t border-[#111] text-[11px] text-gray-600 text-right shrink-0">
         {filteredCount.toLocaleString()} / {totalCount.toLocaleString()} entries
       </div>
     </div>

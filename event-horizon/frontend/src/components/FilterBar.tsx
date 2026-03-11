@@ -19,16 +19,7 @@ export default function FilterBar({ timeFrom, timeTo, propFilters, onRemoveTime,
   }
 
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '6px',
-      padding: '6px 12px',
-      borderBottom: '1px solid #1a1a1a',
-      flexWrap: 'wrap',
-      background: '#060606',
-      minHeight: '36px',
-    }}>
+    <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-[#1a1a1a] flex-wrap bg-[#060606] min-h-[36px]">
       {hasTime && (
         <Chip
           label={`${timeFrom ? fmtTs(timeFrom) : '–'} → ${timeTo ? fmtTs(timeTo) : '–'}`}
