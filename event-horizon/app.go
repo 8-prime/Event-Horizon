@@ -1,109 +1,62 @@
 package main
 
 import (
-	"event-horizon/models"
-	"event-horizon/utils"
-	"fmt"
-
 	"context"
 
-	"github.com/google/uuid"
-	"github.com/nxadm/tail"
+	"event-horizon/internal/store"
+	"event-horizon/internal/watcher"
+
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-// App struct
+// App is the Wails-bound struct — thin IPC surface only.
 type App struct {
-	ctx            context.Context
-	watchedFiles   []models.WatchedFile
-	updatesChannel chan models.LineUpdate
+	ctx     context.Context
+	store   *store.Store
+	watcher *watcher.Watcher
 }
 
-// NewApp creates a new App application struct
-func NewApp() *App {
-	return &App{}
+func NewApp(s *store.Store, w *watcher.Watcher) *App {
+	return &App{store: s, watcher: w}
 }
 
-// startup is called when the app starts. The context is saved
-// so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	a.updatesChannel = make(chan models.LineUpdate)
-
-	go utils.HandleLineChanges(a.ctx, a.updatesChannel)
 }
 
-func (a *App) SelectFile() (models.WatchInfo, error) {
-	watched := models.WatchedFile{
-		Id: uuid.New().String(),
-	}
-
-	file, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-		Title: "Select File to Tail",
+// OpenFileDialog shows a native file picker and returns the selected path(s).
+func (a *App) OpenFileDialog() []string {
+	files, err := runtime.OpenMultipleFilesDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Open Log File(s)",
+		Filters: []runtime.FileFilter{
+			{DisplayName: "Log files (*.log, *.clef, *.json, *.ndjson)", Pattern: "*.log;*.clef;*.json;*.ndjson"},
+			{DisplayName: "All files (*.*)", Pattern: "*.*"},
+		},
 	})
+	if err != nil || len(files) == 0 {
+		return nil
+	}
+	return files
+}
+
+// LoadFile parses a file into the store and starts watching it.
+func (a *App) LoadFile(path string) (store.FileMetadata, error) {
+	meta, err := a.store.LoadFile(path)
 	if err != nil {
-		return watched.GetInfo(), err
+		return store.FileMetadata{}, err
 	}
-	watched.FilePath = file
-
-	t, err := tail.TailFile(watched.FilePath, tail.Config{
-		Follow: true,
-		Poll:   true,
-	})
-	if err != nil {
-		return watched.GetInfo(), err
-	}
-
-	watched.Tail = t
-	watched.Context, watched.Cancel = context.WithCancel(a.ctx)
-	a.watchedFiles = append(a.watchedFiles, watched)
-	go startTailing(a, &watched, a.ctx)
-	return watched.GetInfo(), nil
+	// Best-effort watch; ignore error (e.g. file removed immediately)
+	a.watcher.WatchFile(meta.FileID, path) //nolint:errcheck
+	return meta, nil
 }
 
-func startTailing(app *App, watched *models.WatchedFile, ctx context.Context) {
-	for {
-		select {
-		case <-watched.Context.Done():
-			runtime.EventsEmit(
-				watched.Context,
-				"tail-stopped",
-				watched.Id,
-			)
-			return
-		case <-ctx.Done():
-			runtime.EventsEmit(ctx, "tail-stopped", watched.Id)
-			return
-		case line := <-watched.Tail.Lines:
-			if line.Err != nil {
-				// runtime.EventsEmit(ctx, "read-error", watched.Id)
-				fmt.Printf("Read line error: %v\n", line.Err)
-				continue
-			}
-			//Send update to be batched and sent to frontend
-			app.updatesChannel <- models.LineUpdate{
-				Id:   watched.Id,
-				Line: line.Text,
-			}
-		}
-	}
+// CloseFile stops watching and removes a file from the store.
+func (a *App) CloseFile(fileID string) {
+	a.watcher.StopWatch(fileID)
+	a.store.RemoveFile(fileID)
 }
 
-func (a *App) StopTailing(id string) {
-	a.watchedFiles = removeByIdAndStop(a.watchedFiles, id)
-}
-
-func removeByIdAndStop(slice []models.WatchedFile, id string) []models.WatchedFile {
-	for i, item := range slice {
-		if item.Id == id {
-			item.Cancel()
-			err := item.Tail.Stop()
-			if err != nil {
-				fmt.Println("Error stopping tail")
-			}
-			slice[i] = slice[len(slice)-1]
-			return slice[:len(slice)-1]
-		}
-	}
-	return slice
+// GetPropValues returns distinct values for a property key in a file.
+func (a *App) GetPropValues(fileID, key string) []string {
+	return a.store.GetPropValues(fileID, key)
 }
