@@ -6,6 +6,7 @@ import { useFileWatch } from './hooks/useFileWatch'
 import VirtualList from './components/VirtualList'
 import Sidebar from './components/Sidebar'
 import FilterBar from './components/FilterBar'
+import DetailPanel from './components/DetailPanel'
 import { LEVELS } from './lib/clef'
 
 interface FileInfo {
@@ -27,11 +28,14 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isDragging, setIsDragging] = useState(false)
   const [liveTail, setLiveTail] = useState<Entry[]>([])
+  const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null)
+  const [panelPosition, setPanelPosition] = useState<'right' | 'bottom'>(() =>
+    (localStorage.getItem('panelPosition') as 'right' | 'bottom') ?? 'right'
+  )
 
   const entriesRef = useRef<Entry[]>([])
   const activeFile = files.find(f => f.fileId === activeFileId)
 
-  // Build filter query
   const filterQuery: FilterQuery | null = activeFileId ? {
     fileId: activeFileId,
     levels: activeLevels.size > 0 ? Array.from(activeLevels) : undefined,
@@ -43,27 +47,22 @@ export default function App() {
 
   const hasFilters = activeLevels.size > 0 || timeFrom || timeTo || propFilters.length > 0 || searchQuery
 
-  // Stream entries on file change
   useEntryStream(activeFileId, entriesRef, (_count) => {
     setStreamCount(c => c + 1)
     setLiveTail([])
   })
 
-  // Filter entries
   const filtered = useFilter(hasFilters ? filterQuery : null, streamCount)
 
-  // SSE live watch
   useFileWatch(activeFileId, entriesRef, hasFilters ? filterQuery : null, (e) => {
     setLiveTail(prev => [...prev, e])
   })
 
-  // Displayed entries: filtered (if active) or all + live
   const displayedEntries: Entry[] = (() => {
     if (hasFilters && filtered !== null) return filtered
     return [...entriesRef.current, ...liveTail]
   })()
 
-  // Level counts
   const levelCounts = LEVELS.map((_, idx) =>
     entriesRef.current.filter(e => e.lvl === idx).length
   )
@@ -84,6 +83,7 @@ export default function App() {
         }]
       })
       setActiveFileId(meta.fileId)
+      setSelectedEntry(null)
     }
   }
 
@@ -92,6 +92,7 @@ export default function App() {
     setFiles(prev => prev.filter(f => f.fileId !== fileId))
     if (activeFileId === fileId) {
       setActiveFileId(null)
+      setSelectedEntry(null)
       entriesRef.current = []
     }
   }
@@ -112,6 +113,16 @@ export default function App() {
     })
   }, [])
 
+  const handleSelect = useCallback((entry: Entry) => {
+    setSelectedEntry(prev => prev?.id === entry.id ? null : entry)
+  }, [])
+
+  const handleTogglePanelPosition = () => {
+    const next = panelPosition === 'right' ? 'bottom' : 'right'
+    setPanelPosition(next)
+    localStorage.setItem('panelPosition', next)
+  }
+
   const propValueSuggestions = useCallback((key: string) => {
     if (!activeFileId || !key) return []
     return activeFile?.propKeys.includes(key)
@@ -124,7 +135,6 @@ export default function App() {
       : []
   }, [activeFileId, activeFile])
 
-  // Drag-and-drop
   const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true) }
   const handleDragLeave = () => setIsDragging(false)
   const handleDrop = async (e: React.DragEvent) => {
@@ -145,6 +155,7 @@ export default function App() {
         }]
       })
       setActiveFileId(meta.fileId)
+      setSelectedEntry(null)
     }
   }
 
@@ -168,11 +179,10 @@ export default function App() {
 
         <div className="flex-1" />
 
-        {/* File tabs */}
         {files.map(fi => (
           <button
             key={fi.fileId}
-            onClick={() => setActiveFileId(fi.fileId)}
+            onClick={() => { setActiveFileId(fi.fileId); setSelectedEntry(null) }}
             className={`border rounded px-[10px] py-[3px] text-xs cursor-pointer font-[inherit] max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap ${
               activeFileId === fi.fileId
                 ? 'bg-[#1a1a1a] border-[#2a2a2a] text-gray-200'
@@ -223,7 +233,6 @@ export default function App() {
           onDrop={handleDrop}
         >
           {files.length === 0 ? (
-            /* Empty state */
             <div className="flex-1 flex flex-col items-center justify-center gap-4 text-gray-700 select-none">
               <svg width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
@@ -237,26 +246,40 @@ export default function App() {
               </button>
             </div>
           ) : activeFileId && displayedEntries.length === 0 ? (
-            /* Zero results */
             <div className="flex-1 flex items-center justify-center text-[32px] text-gray-700 select-none">
               ∅
             </div>
           ) : activeFileId ? (
-            <>
-              <FilterBar
-                timeFrom={timeFrom}
-                timeTo={timeTo}
-                propFilters={propFilters}
-                onRemoveTime={() => { setTimeFrom(undefined); setTimeTo(undefined) }}
-                onRemoveProp={idx => setPropFilters(prev => prev.filter((_, i) => i !== idx))}
-              />
-              <VirtualList
-                entries={displayedEntries}
-                fileName={activeFile?.name ?? ''}
-                query={searchQuery}
-                onPropFilter={handlePropFilter}
-              />
-            </>
+            <div className={`flex-1 flex overflow-hidden min-h-0 ${panelPosition === 'bottom' ? 'flex-col' : 'flex-row'}`}>
+              {/* Log list */}
+              <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+                <FilterBar
+                  timeFrom={timeFrom}
+                  timeTo={timeTo}
+                  propFilters={propFilters}
+                  onRemoveTime={() => { setTimeFrom(undefined); setTimeTo(undefined) }}
+                  onRemoveProp={idx => setPropFilters(prev => prev.filter((_, i) => i !== idx))}
+                />
+                <VirtualList
+                  entries={displayedEntries}
+                  fileName={activeFile?.name ?? ''}
+                  query={searchQuery}
+                  selectedId={selectedEntry?.id}
+                  onSelect={handleSelect}
+                  onPropFilter={handlePropFilter}
+                />
+              </div>
+
+              {/* Detail panel */}
+              {selectedEntry && (
+                <DetailPanel
+                  entry={selectedEntry}
+                  position={panelPosition}
+                  onClose={() => setSelectedEntry(null)}
+                  onTogglePosition={handleTogglePanelPosition}
+                />
+              )}
+            </div>
           ) : (
             <div className="flex-1 flex items-center justify-center text-gray-700 text-[13px]">
               Select a file tab above
