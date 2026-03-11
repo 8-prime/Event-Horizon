@@ -1,6 +1,24 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* ── Global overrides for log viewer ── */
+* { box-sizing: border-box; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #080808; }
+::-webkit-scrollbar-thumb { background: #1f1f1f; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #2a2a2a; }
+
+input::placeholder { color: #737c8a; }
+input[type=datetime-local]::-webkit-calendar-picker-indicator { filter: invert(0.3); cursor: pointer; }
+select option { background: #111; }
+
+body {
+  background: #080808;
+  margin: 0;
+  font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', ui-monospace, monospace;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
