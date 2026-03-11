@@ -165,41 +165,48 @@ export default function App() {
   return (
     <div className="flex flex-col h-screen bg-[#080808] overflow-hidden">
       {/* Header */}
-      <header className="h-12 bg-[#050505] border-b border-[#111] flex items-center gap-3 px-4 shrink-0">
-        <span className="font-bold text-sm text-gray-200 tracking-[0.05em] whitespace-nowrap">
-          Event Horizon
-        </span>
+      <header className="h-12 bg-[#050505] border-b border-[#111] flex items-center shrink-0">
+        {/* Left section — matches sidebar width */}
+        <div className="w-[252px] shrink-0 flex items-center gap-2 px-4">
+          <img src="/appicon.png" alt="" className="w-5 h-5 object-contain" />
+          <span className="font-bold text-sm text-gray-200 tracking-[0.05em] whitespace-nowrap">
+            Event Horizon
+          </span>
+        </div>
 
-        <input
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          placeholder="Search messages…"
-          className="flex-1 max-w-[480px] bg-[#0d0d0d] border border-[#1f1f1f] rounded-md text-gray-300 text-[13px] px-3 py-[5px] outline-none font-[inherit]"
-        />
+        {/* Right section — aligns with main content */}
+        <div className="flex-1 flex items-center gap-3 pr-4 overflow-hidden">
+          <input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Search messages…"
+            className="w-[320px] shrink-0 bg-[#0d0d0d] border border-[#1f1f1f] rounded-md text-gray-300 text-[13px] px-3 py-[5px] outline-none font-[inherit]"
+          />
 
-        <div className="flex-1" />
+          <div className="flex-1" />
 
-        {files.map(fi => (
+          {files.map(fi => (
+            <button
+              key={fi.fileId}
+              onClick={() => { setActiveFileId(fi.fileId); setSelectedEntry(null) }}
+              className={`border rounded px-[10px] py-[3px] text-xs cursor-pointer font-[inherit] max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap ${
+                activeFileId === fi.fileId
+                  ? 'bg-[#1a1a1a] border-[#2a2a2a] text-gray-200'
+                  : 'bg-transparent border-transparent text-gray-500'
+              }`}
+              title={fi.name}
+            >
+              {fi.name}
+            </button>
+          ))}
+
           <button
-            key={fi.fileId}
-            onClick={() => { setActiveFileId(fi.fileId); setSelectedEntry(null) }}
-            className={`border rounded px-[10px] py-[3px] text-xs cursor-pointer font-[inherit] max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap ${
-              activeFileId === fi.fileId
-                ? 'bg-[#1a1a1a] border-[#2a2a2a] text-gray-200'
-                : 'bg-transparent border-transparent text-gray-500'
-            }`}
-            title={fi.name}
+            onClick={openFiles}
+            className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-md text-gray-400 text-xs px-3 py-[5px] cursor-pointer font-[inherit] shrink-0 whitespace-nowrap"
           >
-            {fi.name}
+            Open files
           </button>
-        ))}
-
-        <button
-          onClick={openFiles}
-          className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-md text-gray-400 text-xs px-3 py-[5px] cursor-pointer font-[inherit] shrink-0 whitespace-nowrap"
-        >
-          Open files
-        </button>
+        </div>
       </header>
 
       {/* Body */}
