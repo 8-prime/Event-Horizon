@@ -1,12 +1,12 @@
 # Event Horizon
 
-A desktop log viewer for Serilog CLEF files. Built with Wails.
+A desktop log viewer for Serilog CLEF (Compact Log Event Format) files. Built with [Wails](https://wails.io/).
 
 ![Plain view](./assets/plain-view.png)
 
 ## Features
 
-**Search** — filter entries by message text with inline match highlighting.
+**Search**: filter entries by message text with inline match highlighting.
 
 ![Search highlight](./assets/search-highlight.png)
 
@@ -14,11 +14,11 @@ A desktop log viewer for Serilog CLEF files. Built with Wails.
 
 ![Property filter](./assets/property-filter.png)
 
-**Detail panel** — click an entry to see its full message, properties, and raw JSON. Dockable to the right or bottom.
+**Detail panel**: click an entry to see its full message, properties, and raw JSON. Dockable to the right or bottom.
 
 ![Item selected](./assets/item-selected.png)
 
-**Live tail** — new entries are streamed in as they are written to the file.
+**Live tail**: new entries are streamed in as they are written to the file.
 
 ## Installation
 
