@@ -90,7 +90,7 @@ func Start(s *store.Store) error {
 		}
 	})
 
-	// POST /filter — filter entries, stream matching as NDJSON
+	// POST /filter — filter entries, return matching IDs as JSON array
 	mux.HandleFunc("/filter", func(w http.ResponseWriter, r *http.Request) {
 		setCORS(w)
 		if r.Method == http.MethodOptions {
@@ -108,24 +108,9 @@ func Start(s *store.Store) error {
 		}
 
 		ids := filter.Filter(s, q)
-		// Build ID set for fast lookup
-		idSet := make(map[uint32]struct{}, len(ids))
-		for _, id := range ids {
-			idSet[id] = struct{}{}
-		}
-
-		entries := s.GetEntries(q.FileID)
-		w.Header().Set("Content-Type", "application/x-ndjson")
-		enc := json.NewEncoder(w)
-		for _, e := range entries {
-			if _, ok := idSet[e.ID]; ok {
-				if err := enc.Encode(e); err != nil {
-					return
-				}
-			}
-		}
-		if f, ok := w.(http.Flusher); ok {
-			f.Flush()
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(ids); err != nil {
+			return
 		}
 	})
 
