@@ -9,7 +9,13 @@ interface Props {
   onRemoveProp: (idx: number) => void
 }
 
-export default function FilterBar({ timeFrom, timeTo, propFilters, onRemoveTime, onRemoveProp }: Props) {
+export default function FilterBar({
+  timeFrom,
+  timeTo,
+  propFilters,
+  onRemoveTime,
+  onRemoveProp,
+}: Props) {
   const hasTime = timeFrom || timeTo
   if (!hasTime && propFilters.length === 0) return null
 

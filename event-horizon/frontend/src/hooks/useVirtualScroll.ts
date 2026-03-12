@@ -33,7 +33,7 @@ export function useVirtualScroll(
 
     el.addEventListener('scroll', onScroll, { passive: true })
 
-    const ro = new ResizeObserver(entries => {
+    const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
         setContainerHeight(entry.contentRect.height)
       }
@@ -59,18 +59,24 @@ export function useVirtualScroll(
 
   // Binary search for startIndex
   let startIndex = 0
-  let lo = 0, hi = itemCount - 1
+  let lo = 0,
+    hi = itemCount - 1
   while (lo <= hi) {
     const mid = (lo + hi) >> 1
-    if (offsets[mid] < scrollTop) { lo = mid + 1; startIndex = mid }
-    else hi = mid - 1
+    if (offsets[mid] < scrollTop) {
+      lo = mid + 1
+      startIndex = mid
+    } else hi = mid - 1
   }
 
   startIndex = Math.max(0, startIndex - OVERSCAN)
 
   let endIndex = startIndex
   let visibleHeight = 0
-  while (endIndex < itemCount && visibleHeight < containerHeight + getItemHeight(endIndex) * OVERSCAN) {
+  while (
+    endIndex < itemCount &&
+    visibleHeight < containerHeight + getItemHeight(endIndex) * OVERSCAN
+  ) {
     visibleHeight += getItemHeight(endIndex)
     endIndex++
   }

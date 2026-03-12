@@ -12,8 +12,8 @@ export default function AutoInput({ value, onChange, suggestions = [], placehold
   const [focused, setFocused] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
-  const filtered = suggestions.filter(s =>
-    s.toLowerCase().includes(value.toLowerCase()) && s !== value
+  const filtered = suggestions.filter(
+    (s) => s.toLowerCase().includes(value.toLowerCase()) && s !== value
   )
   const showDropdown = focused && filtered.length > 0
 
@@ -32,17 +32,27 @@ export default function AutoInput({ value, onChange, suggestions = [], placehold
     <div ref={ref} className="relative">
       <input
         value={value}
-        onChange={e => { onChange(e.target.value); setOpen(true) }}
-        onFocus={() => { setFocused(true); setOpen(true) }}
+        onChange={(e) => {
+          onChange(e.target.value)
+          setOpen(true)
+        }}
+        onFocus={() => {
+          setFocused(true)
+          setOpen(true)
+        }}
         placeholder={placeholder}
         className="w-full bg-[#0d0d0d] border border-[#2a2a2a] rounded text-gray-300 text-xs px-2 py-1 outline-none font-[inherit]"
       />
       {showDropdown && open && (
         <div className="absolute top-full left-0 right-0 bg-[#111] border border-[#2a2a2a] rounded mt-0.5 z-[100] max-h-[160px] overflow-y-auto">
-          {filtered.slice(0, 20).map(s => (
+          {filtered.slice(0, 20).map((s) => (
             <div
               key={s}
-              onMouseDown={e => { e.preventDefault(); onChange(s); setOpen(false) }}
+              onMouseDown={(e) => {
+                e.preventDefault()
+                onChange(s)
+                setOpen(false)
+              }}
               className="px-[10px] py-[5px] text-xs text-gray-300 cursor-pointer hover:bg-[#1a1a1a]"
             >
               {s}

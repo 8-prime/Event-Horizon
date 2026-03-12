@@ -53,7 +53,13 @@ function passesFilter(e: Entry, q: FilterQuery | null): boolean {
       if (pf.op === 'exists' && val === undefined) return false
       if (pf.op === '=' && String(val) !== pf.value) return false
       if (pf.op === '!=' && String(val) === pf.value) return false
-      if (pf.op === 'contains' && !String(val ?? '').toLowerCase().includes(pf.value.toLowerCase())) return false
+      if (
+        pf.op === 'contains' &&
+        !String(val ?? '')
+          .toLowerCase()
+          .includes(pf.value.toLowerCase())
+      )
+        return false
     }
   }
 
