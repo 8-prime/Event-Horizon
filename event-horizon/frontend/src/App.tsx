@@ -62,7 +62,8 @@ export default function App() {
   })
 
   const displayedEntries: Entry[] = (() => {
-    if (hasFilters && filtered !== null) return filtered
+    if (hasFilters && filtered !== null)
+      return [...entriesRef.current, ...liveTail].filter((e) => filtered.has(e.id))
     return [...entriesRef.current, ...liveTail]
   })()
 
