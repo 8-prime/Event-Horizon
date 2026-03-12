@@ -24,7 +24,7 @@ export interface FilterQuery {
  */
 export function useFilter(
   query: FilterQuery | null,
-  streamCount: number  // changes when stream finishes, triggers re-filter
+  streamCount: number // changes when stream finishes, triggers re-filter
 ): Entry[] | null {
   const [filtered, setFiltered] = useState<Entry[] | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -67,7 +67,9 @@ export function useFilter(
             for (const line of lines) {
               const t = line.trim()
               if (!t) continue
-              try { results.push(JSON.parse(t)) } catch {}
+              try {
+                results.push(JSON.parse(t))
+              } catch {}
             }
           }
           if (done) break

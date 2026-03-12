@@ -12,7 +12,7 @@ interface FileInfo {
 
 interface Props {
   files: FileInfo[]
-  levelCounts: number[]       // count per level index 0-5
+  levelCounts: number[] // count per level index 0-5
   activeLevels: Set<number>
   onToggleLevel: (lvl: number) => void
   timeFrom?: number
@@ -31,8 +31,8 @@ interface Props {
 
 const TIME_PRESETS = [
   { label: '15m', ms: 15 * 60 * 1000 },
-  { label: '1h',  ms: 60 * 60 * 1000 },
-  { label: '6h',  ms: 6 * 60 * 60 * 1000 },
+  { label: '1h', ms: 60 * 60 * 1000 },
+  { label: '6h', ms: 6 * 60 * 60 * 1000 },
   { label: '12h', ms: 12 * 60 * 60 * 1000 },
   { label: '24h', ms: 24 * 60 * 60 * 1000 },
 ]
@@ -40,7 +40,7 @@ const TIME_PRESETS = [
 function nsToDatetimeLocal(ns: number): string {
   const d = new Date(ns / 1_000_000)
   const pad = (n: number, len = 2) => String(n).padStart(len, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 function datetimeLocalToNs(s: string): number {
@@ -49,12 +49,22 @@ function datetimeLocalToNs(s: string): number {
 
 export default function Sidebar(props: Props) {
   const {
-    files, levelCounts, activeLevels, onToggleLevel,
-    timeFrom, timeTo, onTimeChange,
-    propFilters, onAddPropFilter, onRemovePropFilter,
-    propKeysSuggestions, propValueSuggestions,
-    filteredCount, totalCount,
-    onToggleFile, onCloseFile,
+    files,
+    levelCounts,
+    activeLevels,
+    onToggleLevel,
+    timeFrom,
+    timeTo,
+    onTimeChange,
+    propFilters,
+    onAddPropFilter,
+    onRemovePropFilter,
+    propKeysSuggestions,
+    propValueSuggestions,
+    filteredCount,
+    totalCount,
+    onToggleFile,
+    onCloseFile,
   } = props
 
   const [newPfKey, setNewPfKey] = useState('')
@@ -90,10 +100,7 @@ export default function Sidebar(props: Props) {
               onClick={() => onToggleLevel(idx)}
               className={`flex items-center gap-2 py-1 px-1.5 rounded-[3px] cursor-pointer select-none hover:bg-[#0d0d0d] ${active ? 'opacity-100' : 'opacity-[0.35]'}`}
             >
-              <span
-                className="size-2 rounded-full shrink-0"
-                style={{ background: cfg.color }}
-              />
+              <span className="size-2 rounded-full shrink-0" style={{ background: cfg.color }} />
               <span className="flex-1 text-xs text-gray-300">{cfg.label}</span>
               <span className="text-[11px] text-gray-600">{count}</span>
             </div>
@@ -105,7 +112,7 @@ export default function Sidebar(props: Props) {
       <section className="p-3 border-b border-[#111]">
         <div className={sectionLabelClass}>Time Range</div>
         <div className="flex gap-1 mb-2 flex-wrap">
-          {TIME_PRESETS.map(p => (
+          {TIME_PRESETS.map((p) => (
             <button
               key={p.label}
               onClick={() => handlePreset(p.ms)}
@@ -127,14 +134,18 @@ export default function Sidebar(props: Props) {
           <input
             type="datetime-local"
             value={timeFrom ? nsToDatetimeLocal(timeFrom) : ''}
-            onChange={e => onTimeChange(e.target.value ? datetimeLocalToNs(e.target.value) : undefined, timeTo)}
+            onChange={(e) =>
+              onTimeChange(e.target.value ? datetimeLocalToNs(e.target.value) : undefined, timeTo)
+            }
             placeholder="From"
             className="bg-[#0d0d0d] border border-[#2a2a2a] rounded text-gray-300 text-[11px] px-1.5 py-1 font-[inherit] [color-scheme:dark] w-full"
           />
           <input
             type="datetime-local"
             value={timeTo ? nsToDatetimeLocal(timeTo) : ''}
-            onChange={e => onTimeChange(timeFrom, e.target.value ? datetimeLocalToNs(e.target.value) : undefined)}
+            onChange={(e) =>
+              onTimeChange(timeFrom, e.target.value ? datetimeLocalToNs(e.target.value) : undefined)
+            }
             placeholder="To"
             className="bg-[#0d0d0d] border border-[#2a2a2a] rounded text-gray-300 text-[11px] px-1.5 py-1 font-[inherit] [color-scheme:dark] w-full"
           />
@@ -153,7 +164,9 @@ export default function Sidebar(props: Props) {
             <button
               onClick={() => onRemovePropFilter(i)}
               className="bg-transparent border-none text-gray-600 cursor-pointer text-sm px-0.5 font-[inherit]"
-            >×</button>
+            >
+              ×
+            </button>
           </div>
         ))}
 
@@ -166,7 +179,7 @@ export default function Sidebar(props: Props) {
           />
           <select
             value={newPfOp}
-            onChange={e => setNewPfOp(e.target.value)}
+            onChange={(e) => setNewPfOp(e.target.value)}
             className="bg-[#0d0d0d] border border-[#2a2a2a] rounded text-gray-300 text-xs px-1.5 py-1 font-[inherit] [color-scheme:dark]"
           >
             <option value="=">=</option>
@@ -197,7 +210,7 @@ export default function Sidebar(props: Props) {
           <div className="mt-2.5">
             <div className="text-[10px] text-gray-700 mb-1">Known keys</div>
             <div className="flex flex-wrap gap-[3px]">
-              {propKeysSuggestions.slice(0, 20).map(k => (
+              {propKeysSuggestions.slice(0, 20).map((k) => (
                 <span
                   key={k}
                   onClick={() => setNewPfKey(k)}
@@ -214,8 +227,11 @@ export default function Sidebar(props: Props) {
       {/* FILES */}
       <section className="p-3 flex-1">
         <div className={sectionLabelClass}>Files</div>
-        {files.map(fi => (
-          <div key={fi.fileId} className="flex items-center gap-1.5 py-1 px-1.5 rounded-[3px] mb-0.5">
+        {files.map((fi) => (
+          <div
+            key={fi.fileId}
+            className="flex items-center gap-1.5 py-1 px-1.5 rounded-[3px] mb-0.5"
+          >
             <span
               onClick={() => onToggleFile(fi.fileId)}
               className={`flex-1 text-xs cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap ${fi.visible ? 'text-gray-300' : 'text-gray-600'}`}
@@ -227,7 +243,9 @@ export default function Sidebar(props: Props) {
             <button
               onClick={() => onCloseFile(fi.fileId)}
               className="bg-transparent border-none text-gray-700 cursor-pointer text-sm p-0 font-[inherit]"
-            >×</button>
+            >
+              ×
+            </button>
           </div>
         ))}
       </section>

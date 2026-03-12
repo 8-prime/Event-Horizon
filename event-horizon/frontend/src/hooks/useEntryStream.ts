@@ -38,7 +38,10 @@ export function useEntryStream(
 
         while (true) {
           const { done, value } = await reader.read()
-          if (cancelled) { reader.cancel(); break }
+          if (cancelled) {
+            reader.cancel()
+            break
+          }
           if (value) {
             buf += decoder.decode(value, { stream: true })
             const lines = buf.split('\n')
@@ -64,6 +67,8 @@ export function useEntryStream(
     }
 
     run()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [fileId])
 }

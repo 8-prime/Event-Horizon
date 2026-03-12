@@ -57,20 +57,13 @@ function LogRow({ entry, fileName, query, isSelected, onSelect, onPropFilter }: 
           <span className="flex-1 text-[13px] text-gray-300 whitespace-nowrap overflow-hidden text-ellipsis">
             {highlight(entry.msg, query)}
           </span>
-          <span className="text-[11px] text-[#737c8a] shrink-0 whitespace-nowrap">
-            {fileName}
-          </span>
+          <span className="text-[11px] text-[#737c8a] shrink-0 whitespace-nowrap">{fileName}</span>
         </div>
 
         {inlineProps.length > 0 && (
           <div className="flex items-center gap-1 py-px pb-1 flex-nowrap overflow-hidden">
             {inlineProps.map(([k, v]) => (
-              <PropPill
-                key={k}
-                propKey={k}
-                value={String(v)}
-                onFilter={onPropFilter}
-              />
+              <PropPill key={k} propKey={k} value={String(v)} onFilter={onPropFilter} />
             ))}
             {extraCount > 0 && (
               <span className="text-[11px] text-gray-600 shrink-0">+{extraCount}</span>

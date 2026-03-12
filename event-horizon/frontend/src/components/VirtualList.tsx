@@ -3,8 +3,8 @@ import { useVirtualScroll } from '../hooks/useVirtualScroll'
 import LogRow from './LogRow'
 import type { Entry } from '../hooks/useEntryStream'
 
-const ROW_BASE = 32        // message only
-const ROW_WITH_PROPS = 52  // message + props pill row
+const ROW_BASE = 32 // message only
+const ROW_WITH_PROPS = 52 // message + props pill row
 
 interface Props {
   entries: Entry[]
@@ -15,15 +15,25 @@ interface Props {
   onPropFilter: (key: string, value: string) => void
 }
 
-export default function VirtualList({ entries, fileName, query, selectedId, onSelect, onPropFilter }: Props) {
+export default function VirtualList({
+  entries,
+  fileName,
+  query,
+  selectedId,
+  onSelect,
+  onPropFilter,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const getItemHeight = useCallback((i: number): number => {
-    const e = entries[i]
-    if (!e) return ROW_BASE
-    const hasProps = e.props && Object.keys(e.props).length > 0
-    return hasProps ? ROW_WITH_PROPS : ROW_BASE
-  }, [entries])
+  const getItemHeight = useCallback(
+    (i: number): number => {
+      const e = entries[i]
+      if (!e) return ROW_BASE
+      const hasProps = e.props && Object.keys(e.props).length > 0
+      return hasProps ? ROW_WITH_PROPS : ROW_BASE
+    },
+    [entries]
+  )
 
   const { startIndex, endIndex, totalHeight } = useVirtualScroll(
     containerRef,
@@ -44,11 +54,7 @@ export default function VirtualList({ entries, fileName, query, selectedId, onSe
     const entry = entries[i]
     if (!entry) continue
     visibleItems.push(
-      <div
-        key={entry.id}
-        className="absolute left-0 right-0"
-        style={{ top: positions[i] }}
-      >
+      <div key={entry.id} className="absolute left-0 right-0" style={{ top: positions[i] }}>
         <LogRow
           entry={entry}
           fileName={fileName}
