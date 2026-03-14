@@ -131,7 +131,7 @@ func (w *Watcher) handleWrite(path string) {
 	for scanner.Scan() {
 		line := scanner.Text()
 		id := w.store.NextFileID(st.fileID)
-		if entry, ok := store.ParseCLEF(line, id, fileIdx); ok {
+		if entry, ok := w.store.ParseLine(st.fileID, line, id, fileIdx); ok {
 			newEntries = append(newEntries, entry)
 		}
 	}

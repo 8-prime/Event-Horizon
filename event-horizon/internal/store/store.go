@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"sync"
 	"sync/atomic"
+
+	"event-horizon/internal/parser"
 )
 
 // FileMetadata is returned to the frontend after loading a file.
@@ -26,6 +28,7 @@ type file struct {
 	name     string
 	entries  []Entry
 	propKeys map[string]struct{}
+	parser   parser.Parser
 }
 
 func (f *file) nextID() uint32 {
@@ -42,10 +45,15 @@ func NewStore() *Store {
 	return &Store{files: make(map[string]*file)}
 }
 
-// LoadFile reads and parses a CLEF file, adding it to the store.
+// LoadFile reads and parses a log file, adding it to the store.
 func (s *Store) LoadFile(path string) (FileMetadata, error) {
 	name := filepath.Base(path)
 	fileID := fmt.Sprintf("%s-%s", name, path) // stable ID based on path
+
+	p, err := parser.Detect(path)
+	if err != nil {
+		return FileMetadata{}, err
+	}
 
 	f, err := os.Open(path)
 	if err != nil {
@@ -58,6 +66,7 @@ func (s *Store) LoadFile(path string) (FileMetadata, error) {
 		path:     path,
 		name:     name,
 		propKeys: make(map[string]struct{}),
+		parser:   p,
 	}
 
 	// Use file index based on store size for FileIdx (capped at 255)
@@ -65,19 +74,27 @@ func (s *Store) LoadFile(path string) (FileMetadata, error) {
 	idx := uint8(len(s.files))
 	s.mu.RUnlock()
 
+	appendEntry := func(pl parser.ParsedLine) {
+		entry := Entry{ID: fl.nextID(), FileIdx: idx, Ts: pl.Ts, Level: pl.Level, Msg: pl.Msg, Ex: pl.Ex, Props: pl.Props}
+		for k := range entry.Props {
+			fl.propKeys[k] = struct{}{}
+		}
+		fl.entries = append(fl.entries, entry)
+	}
+
 	scanner := bufio.NewScanner(f)
 	scanner.Buffer(make([]byte, 1024*1024), 1024*1024)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if entry, ok := ParseCLEF(line, fl.nextID(), idx); ok {
-			for k := range entry.Props {
-				fl.propKeys[k] = struct{}{}
-			}
-			fl.entries = append(fl.entries, entry)
+		if pl, ok := fl.parser.ParseLine(line); ok {
+			appendEntry(pl)
 		}
 	}
 	if err := scanner.Err(); err != nil {
 		return FileMetadata{}, err
+	}
+	if pl, ok := fl.parser.Flush(); ok {
+		appendEntry(pl)
 	}
 
 	s.mu.Lock()
@@ -85,6 +102,53 @@ func (s *Store) LoadFile(path string) (FileMetadata, error) {
 	s.mu.Unlock()
 
 	return buildMetadata(fl), nil
+}
+
+// ParseLine parses a log line using the parser associated with the given file.
+func (s *Store) ParseLine(fileID, line string, id uint32, fileIdx uint8) (Entry, bool) {
+	s.mu.RLock()
+	fl, ok := s.files[fileID]
+	s.mu.RUnlock()
+	if !ok {
+		return Entry{}, false
+	}
+	pl, ok := fl.parser.ParseLine(line)
+	if !ok {
+		return Entry{}, false
+	}
+	return Entry{
+		ID:      id,
+		FileIdx: fileIdx,
+		Ts:      pl.Ts,
+		Level:   pl.Level,
+		Msg:     pl.Msg,
+		Ex:      pl.Ex,
+		Props:   pl.Props,
+	}, true
+}
+
+// FlushParser drains any pending buffered entry from the file's parser.
+// Used after watcher write batches to ensure the last entry is emitted when needed.
+func (s *Store) FlushParser(fileID string, fileIdx uint8) (Entry, bool) {
+	s.mu.RLock()
+	fl, ok := s.files[fileID]
+	s.mu.RUnlock()
+	if !ok {
+		return Entry{}, false
+	}
+	pl, ok := fl.parser.Flush()
+	if !ok {
+		return Entry{}, false
+	}
+	return Entry{
+		ID:      fl.nextID(),
+		FileIdx: fileIdx,
+		Ts:      pl.Ts,
+		Level:   pl.Level,
+		Msg:     pl.Msg,
+		Ex:      pl.Ex,
+		Props:   pl.Props,
+	}, true
 }
 
 // AppendEntries adds new entries to an existing file.
