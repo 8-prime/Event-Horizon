@@ -1,6 +1,8 @@
 # Event Horizon
 
-A desktop log viewer for Serilog CLEF (Compact Log Event Format) files. Built with [Wails](https://wails.io/).
+A desktop log viewer with support for:
+- Serilog CLEF (Compact Log Event Format) files. 
+- Log4X files with automatic log pattern detection
 
 ![Plain view](./assets/plain-view.png)
 
@@ -27,3 +29,7 @@ Download a pre-built binary from the [releases page](../../releases), or build f
 1. Install [Go](https://go.dev/doc/install) and [Wails](https://wails.io/docs/gettingstarted/installation)
 2. Clone the repository
 3. Run `wails build` inside the `event-horizon` directory
+
+---
+
+Built with ♥️ and [Wails](https://wails.io/).
