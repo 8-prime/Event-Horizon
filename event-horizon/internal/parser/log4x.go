@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -148,7 +147,6 @@ func detectLog4xPattern(lines []string) *Log4xPattern {
 	var best *Log4xPattern
 	bestScore := 0
 	for _, p := range knownPatterns {
-		fmt.Printf("Testin patter %s", p.FormatString)
 		hits := 0
 		evaluated := 0
 		for _, line := range lines {
@@ -157,7 +155,6 @@ func detectLog4xPattern(lines []string) *Log4xPattern {
 			}
 			evaluated++
 			if p.re.MatchString(strings.TrimSpace(line)) {
-				fmt.Println("match")
 				hits++
 			}
 		}
