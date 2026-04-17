@@ -158,7 +158,10 @@ export default function Sidebar(props: Props) {
 
         {propFilters.map((pf, i) => (
           <div key={i} className="flex items-center gap-1 mb-1">
-            <span className="text-[11px] text-gray-400 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+            <span
+              className="text-[11px] text-gray-400 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
+              title={`${pf.key} ${pf.op} ${pf.value}`}
+            >
               {pf.key} {pf.op} {pf.value}
             </span>
             <button

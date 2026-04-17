@@ -53,7 +53,8 @@ export default function AutoInput({ value, onChange, suggestions = [], placehold
                 onChange(s)
                 setOpen(false)
               }}
-              className="px-[10px] py-[5px] text-xs text-gray-300 cursor-pointer hover:bg-[#1a1a1a]"
+              title={s}
+              className="px-[10px] py-[5px] text-xs text-gray-300 cursor-pointer hover:bg-[#1a1a1a] overflow-hidden text-ellipsis whitespace-nowrap"
             >
               {s}
             </div>

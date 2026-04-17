@@ -131,14 +131,12 @@ export default function App() {
   const propValueSuggestions = useCallback(
     (key: string) => {
       if (!activeFileId || !key) return []
-      return activeFile?.propKeys.includes(key)
-        ? entriesRef.current
-            .map((e) => e.props?.[key])
-            .filter((v): v is unknown => v !== undefined)
-            .map(String)
-            .filter((v, i, a) => a.indexOf(v) === i)
-            .slice(0, 20)
-        : []
+      if (!activeFile?.propKeys.includes(key)) return []
+      const vals = entriesRef.current
+        .map((e) => e.props?.[key])
+        .filter((v): v is unknown => v !== undefined)
+        .map(String)
+      return Array.from(new Set(vals)).slice(0, 20)
     },
     [activeFileId, activeFile]
   )
