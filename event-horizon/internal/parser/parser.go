@@ -41,7 +41,7 @@ func Detect(path string) (Parser, error) {
 	scanner := bufio.NewScanner(f)
 	scanner.Buffer(make([]byte, 1024*1024), 1024*1024)
 	for scanner.Scan() && len(lines) < 50 {
-		line := strings.TrimSpace(scanner.Text())
+		line := scanner.Text()
 		if line != "" {
 			lines = append(lines, line)
 		}
@@ -64,12 +64,20 @@ func Detect(path string) (Parser, error) {
 
 	for _, p := range candidates {
 		hits := 0
+		evaluated := 0
 		for _, line := range lines {
+			if len(line) > 0 && (line[0] == ' ' || line[0] == '\t') {
+				continue
+			}
+			evaluated++
 			if _, ok := p.ParseLine(line); ok {
 				hits++
 			}
 		}
-		if hits > bestScore && hits*2 >= len(lines) {
+		if _, ok := p.Flush(); ok {
+			hits++
+		}
+		if hits > bestScore && hits*2 >= evaluated {
 			bestScore = hits
 			best = p
 		}
