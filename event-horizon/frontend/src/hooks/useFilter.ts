@@ -14,7 +14,7 @@ export interface FilterQuery {
   timeFrom?: number
   timeTo?: number
   propFilters?: PropFilter[]
-  query?: string
+  queries?: string[]
 }
 
 /**

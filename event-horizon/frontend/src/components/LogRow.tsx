@@ -9,28 +9,56 @@ const MAX_INLINE_PROPS = 5
 interface Props {
   entry: Entry
   fileName: string
-  query: string
+  queries: string[]
   isSelected: boolean
   onSelect: (entry: Entry) => void
   onPropFilter: (key: string, value: string) => void
 }
 
-function highlight(text: string, query: string): React.ReactNode {
-  if (!query) return text
-  const idx = text.toLowerCase().indexOf(query.toLowerCase())
-  if (idx === -1) return text
-  return (
-    <>
-      {text.slice(0, idx)}
-      <mark className="bg-[#854d0e] text-amber-100 rounded-[2px]">
-        {text.slice(idx, idx + query.length)}
+function highlight(text: string, queries: string[]): React.ReactNode {
+  const active = queries.filter(Boolean)
+  if (!active.length) return text
+
+  const lower = text.toLowerCase()
+  const ranges: [number, number][] = []
+
+  for (const q of active) {
+    const lq = q.toLowerCase()
+    let i = 0
+    while (true) {
+      const pos = lower.indexOf(lq, i)
+      if (pos === -1) break
+      ranges.push([pos, pos + q.length])
+      i = pos + 1
+    }
+  }
+
+  if (!ranges.length) return text
+
+  ranges.sort((a, b) => a[0] - b[0])
+  const merged: [number, number][] = []
+  for (const [s, e] of ranges) {
+    if (merged.length && s <= merged[merged.length - 1][1])
+      merged[merged.length - 1][1] = Math.max(merged[merged.length - 1][1], e)
+    else merged.push([s, e])
+  }
+
+  const parts: React.ReactNode[] = []
+  let pos = 0
+  for (const [s, e] of merged) {
+    if (pos < s) parts.push(text.slice(pos, s))
+    parts.push(
+      <mark key={s} className="bg-[#854d0e] text-amber-100 rounded-[2px]">
+        {text.slice(s, e)}
       </mark>
-      {text.slice(idx + query.length)}
-    </>
-  )
+    )
+    pos = e
+  }
+  if (pos < text.length) parts.push(text.slice(pos))
+  return <>{parts}</>
 }
 
-function LogRow({ entry, fileName, query, isSelected, onSelect, onPropFilter }: Props) {
+function LogRow({ entry, fileName, queries, isSelected, onSelect, onPropFilter }: Props) {
   const props = entry.props ?? {}
   const propEntries = Object.entries(props)
   const inlineProps = propEntries.slice(0, MAX_INLINE_PROPS)
@@ -55,7 +83,7 @@ function LogRow({ entry, fileName, query, isSelected, onSelect, onPropFilter }: 
       <div className="flex-1 min-w-0 ml-2">
         <div className="flex items-center gap-2 h-8">
           <span className="flex-1 text-[13px] text-gray-300 whitespace-nowrap overflow-hidden text-ellipsis">
-            {highlight(entry.msg, query)}
+            {highlight(entry.msg, queries)}
           </span>
           <span className="text-[11px] text-[#737c8a] shrink-0 whitespace-nowrap">{fileName}</span>
         </div>
