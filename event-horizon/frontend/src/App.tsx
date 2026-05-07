@@ -3,7 +3,7 @@ import { OpenFileDialog, LoadFile, CloseFile } from '../wailsjs/go/main/App'
 import { useEntryStream, type Entry } from './hooks/useEntryStream'
 import { useFilter, type FilterQuery, type PropFilter } from './hooks/useFilter'
 import { useFileWatch } from './hooks/useFileWatch'
-import VirtualList from './components/VirtualList'
+import VirtualList, { type VirtualListHandle } from './components/VirtualList'
 import Sidebar from './components/Sidebar'
 import FilterBar from './components/FilterBar'
 import DetailPanel from './components/DetailPanel'
@@ -34,6 +34,7 @@ export default function App() {
   )
 
   const entriesRef = useRef<Entry[]>([])
+  const virtualListRef = useRef<VirtualListHandle>(null)
   const activeFile = files.find((f) => f.fileId === activeFileId)
 
   const filterQuery: FilterQuery | null = activeFileId
@@ -121,6 +122,10 @@ export default function App() {
   const handleSelect = useCallback((entry: Entry) => {
     setSelectedEntry((prev) => (prev?.id === entry.id ? null : entry))
   }, [])
+
+  const handleScrollToSelected = useCallback(() => {
+    if (selectedEntry) virtualListRef.current?.scrollToEntry(selectedEntry.id)
+  }, [selectedEntry])
 
   const handleTogglePanelPosition = () => {
     const next = panelPosition === 'right' ? 'bottom' : 'right'
@@ -310,6 +315,7 @@ export default function App() {
                   onRemoveProp={(idx) => setPropFilters((prev) => prev.filter((_, i) => i !== idx))}
                 />
                 <VirtualList
+                  ref={virtualListRef}
                   entries={displayedEntries}
                   fileName={activeFile?.name ?? ''}
                   query={searchQuery}
@@ -326,6 +332,7 @@ export default function App() {
                   position={panelPosition}
                   onClose={() => setSelectedEntry(null)}
                   onTogglePosition={handleTogglePanelPosition}
+                  onScrollToSelected={handleScrollToSelected}
                 />
               )}
             </div>

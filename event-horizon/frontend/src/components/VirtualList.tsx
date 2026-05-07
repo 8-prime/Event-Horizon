@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { useVirtualScroll } from '../hooks/useVirtualScroll'
 import LogRow from './LogRow'
 import type { Entry } from '../hooks/useEntryStream'
@@ -15,14 +15,18 @@ interface Props {
   onPropFilter: (key: string, value: string) => void
 }
 
-export default function VirtualList({
+export interface VirtualListHandle {
+  scrollToEntry: (id: number) => void
+}
+
+const VirtualList = forwardRef<VirtualListHandle, Props>(function VirtualList({
   entries,
   fileName,
   query,
   selectedId,
   onSelect,
   onPropFilter,
-}: Props) {
+}: Props, ref) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   const getItemHeight = useCallback(
@@ -34,6 +38,18 @@ export default function VirtualList({
     },
     [entries]
   )
+
+  useImperativeHandle(ref, () => ({
+    scrollToEntry: (id: number) => {
+      const idx = entries.findIndex((e) => e.id === id)
+      if (idx === -1 || !containerRef.current) return
+      let top = 0
+      for (let i = 0; i < idx; i++) top += getItemHeight(i)
+      const rowHeight = getItemHeight(idx)
+      const offset = containerRef.current.clientHeight / 2 - rowHeight / 2
+      containerRef.current.scrollTo({ top: Math.max(0, top - offset), behavior: 'smooth' })
+    },
+  }), [entries, getItemHeight])
 
   const { startIndex, endIndex, totalHeight } = useVirtualScroll(
     containerRef,
@@ -74,4 +90,6 @@ export default function VirtualList({
       </div>
     </div>
   )
-}
+})
+
+export default VirtualList
