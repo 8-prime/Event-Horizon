@@ -6,6 +6,17 @@ import (
 	"strings"
 )
 
+type Level uint8
+
+const (
+	Trace Level = iota
+	Debug
+	Information
+	Warning
+	Error
+	Fatal
+)
+
 // ParsedLine is the format-agnostic result of parsing a single log line.
 type ParsedLine struct {
 	Ts    int64
@@ -94,18 +105,18 @@ func Detect(path string) (Parser, error) {
 func normalizeLevel(s string) uint8 {
 	switch strings.ToLower(strings.TrimSpace(s)) {
 	case "verbose", "trace":
-		return 0
+		return uint8(Trace)
 	case "debug":
-		return 1
+		return uint8(Debug)
 	case "info", "information":
-		return 2
+		return uint8(Information)
 	case "warn", "warning":
-		return 3
+		return uint8(Warning)
 	case "error":
-		return 4
+		return uint8(Error)
 	case "fatal", "critical":
-		return 5
+		return uint8(Fatal)
 	default:
-		return 2
+		return uint8(Information)
 	}
 }
