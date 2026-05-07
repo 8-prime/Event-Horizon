@@ -11,7 +11,7 @@ import (
 // PropFilter defines a filter on a single property.
 type PropFilter struct {
 	Key   string `json:"key"`
-	Op    string `json:"op"`   // "=" "!=" "contains" "!contains" ">" "<" "exists"
+	Op    string `json:"op"` // "=" "!=" "contains" "!contains" ">" "<" "exists"
 	Value string `json:"value"`
 }
 
@@ -22,7 +22,7 @@ type FilterQuery struct {
 	TimeFrom    int64        `json:"timeFrom,omitempty"` // unix nanoseconds; 0 = no bound
 	TimeTo      int64        `json:"timeTo,omitempty"`
 	PropFilters []PropFilter `json:"propFilters,omitempty"`
-	Query       string       `json:"query,omitempty"` // full-text on Msg
+	Queries     []string     `json:"queries,omitempty"` // full-text on Msg, OR'd together
 }
 
 // Filter returns the IDs of entries matching the query.
@@ -60,11 +60,14 @@ func matchEntry(e store.Entry, q FilterQuery, levelSet map[uint8]struct{}) bool 
 		return false
 	}
 
-	// Full-text query
-	if q.Query != "" {
-		if !strings.Contains(strings.ToLower(e.Msg), strings.ToLower(q.Query)) {
-			return false
+	// Full-text queries (OR)
+	if len(q.Queries) > 0 {
+		for _, qStr := range q.Queries {
+			if strings.Contains(strings.ToLower(e.Msg), strings.ToLower(qStr)) {
+				return true
+			}
 		}
+		return false
 	}
 
 	// Property filters

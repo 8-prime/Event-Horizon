@@ -25,7 +25,8 @@ export default function App() {
   const [timeFrom, setTimeFrom] = useState<number | undefined>()
   const [timeTo, setTimeTo] = useState<number | undefined>()
   const [propFilters, setPropFilters] = useState<PropFilter[]>([])
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQueries, setSearchQueries] = useState<string[]>([])
+  const [searchInput, setSearchInput] = useState('')
   const [isDragging, setIsDragging] = useState(false)
   const [liveTail, setLiveTail] = useState<Entry[]>([])
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null)
@@ -37,6 +38,8 @@ export default function App() {
   const virtualListRef = useRef<VirtualListHandle>(null)
   const activeFile = files.find((f) => f.fileId === activeFileId)
 
+  const activeQueries = [...searchQueries, searchInput].filter(Boolean)
+
   const filterQuery: FilterQuery | null = activeFileId
     ? {
         fileId: activeFileId,
@@ -44,14 +47,18 @@ export default function App() {
         timeFrom,
         timeTo,
         propFilters: propFilters.length > 0 ? propFilters : undefined,
-        query: searchQuery || undefined,
+        queries: activeQueries.length > 0 ? activeQueries : undefined,
       }
     : null
 
   const hasFilters =
-    activeLevels.size > 0 || timeFrom || timeTo || propFilters.length > 0 || searchQuery
+    activeLevels.size > 0 ||
+    timeFrom ||
+    timeTo ||
+    propFilters.length > 0 ||
+    activeQueries.length > 0
 
-  useEntryStream(activeFileId, entriesRef, (_count) => {
+  useEntryStream(activeFileId, entriesRef, () => {
     setStreamCount((c) => c + 1)
     setLiveTail([])
   })
@@ -196,9 +203,15 @@ export default function App() {
         {/* Right section — aligns with main content */}
         <div className="flex-1 flex items-center gap-3 pr-4 overflow-hidden">
           <input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search messages…"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && searchInput.trim()) {
+                setSearchQueries((prev) => [...prev, searchInput.trim()])
+                setSearchInput('')
+              }
+            }}
+            placeholder="Search messages… (Enter to pin)"
             className="w-[320px] shrink-0 bg-[#0d0d0d] border border-[#1f1f1f] rounded-md text-gray-300 text-[13px] px-3 py-[5px] outline-none font-[inherit]"
           />
 
@@ -306,17 +319,21 @@ export default function App() {
                   timeFrom={timeFrom}
                   timeTo={timeTo}
                   propFilters={propFilters}
+                  searchQueries={searchQueries}
                   onRemoveTime={() => {
                     setTimeFrom(undefined)
                     setTimeTo(undefined)
                   }}
                   onRemoveProp={(idx) => setPropFilters((prev) => prev.filter((_, i) => i !== idx))}
+                  onRemoveSearch={(idx) =>
+                    setSearchQueries((prev) => prev.filter((_, i) => i !== idx))
+                  }
                 />
                 <VirtualList
                   ref={virtualListRef}
                   entries={displayedEntries}
                   fileName={activeFile?.name ?? ''}
-                  query={searchQuery}
+                  queries={activeQueries}
                   selectedId={selectedEntry?.id}
                   onSelect={handleSelect}
                   onPropFilter={handlePropFilter}

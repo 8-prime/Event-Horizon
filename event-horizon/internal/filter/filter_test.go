@@ -62,7 +62,7 @@ func TestFilter_TimeRange(t *testing.T) {
 }
 
 func TestFilter_FullText(t *testing.T) {
-	q := FilterQuery{Query: "hello"}
+	q := FilterQuery{Queries: []string{"hello"}}
 	ids := filterDirect(testEntries, q)
 	if len(ids) != 1 || ids[0] != 1 {
 		t.Fatalf("expected [1], got %v", ids)

@@ -45,7 +45,7 @@ function passesFilter(e: Entry, q: FilterQuery | null): boolean {
   if (q.levels && q.levels.length > 0 && !q.levels.includes(e.lvl)) return false
   if (q.timeFrom && e.ts < q.timeFrom) return false
   if (q.timeTo && e.ts > q.timeTo) return false
-  if (q.query && !e.msg.toLowerCase().includes(q.query.toLowerCase())) return false
+  if (q.queries && q.queries.length > 0 && !q.queries.some((s) => e.msg.toLowerCase().includes(s.toLowerCase()))) return false
 
   if (q.propFilters) {
     for (const pf of q.propFilters) {

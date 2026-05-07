@@ -9,7 +9,7 @@ const ROW_WITH_PROPS = 52 // message + props pill row
 interface Props {
   entries: Entry[]
   fileName: string
-  query: string
+  queries: string[]
   selectedId?: number
   onSelect: (entry: Entry) => void
   onPropFilter: (key: string, value: string) => void
@@ -22,7 +22,7 @@ export interface VirtualListHandle {
 const VirtualList = forwardRef<VirtualListHandle, Props>(function VirtualList({
   entries,
   fileName,
-  query,
+  queries,
   selectedId,
   onSelect,
   onPropFilter,
@@ -74,7 +74,7 @@ const VirtualList = forwardRef<VirtualListHandle, Props>(function VirtualList({
         <LogRow
           entry={entry}
           fileName={fileName}
-          query={query}
+          queries={queries}
           isSelected={entry.id === selectedId}
           onSelect={onSelect}
           onPropFilter={onPropFilter}
