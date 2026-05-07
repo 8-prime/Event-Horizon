@@ -1,3 +1,5 @@
+**/installer/tmp
 build/bin
 node_modules
 frontend/dist
+event-horizon.exe

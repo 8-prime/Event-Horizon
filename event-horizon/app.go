@@ -2,117 +2,61 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"path/filepath"
 
-	"github.com/google/uuid"
-	"github.com/hpcloud/tail"
+	"event-horizon/internal/store"
+	"event-horizon/internal/watcher"
+
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-type FileUpdate struct {
-	Id   string `json:"id"`
-	Line string `json:"line"`
-}
-
-type WatchInfo struct {
-	Id       string `json:"id"`
-	FilePath string `json:"filePath"`
-	FileName string `json:"fileName"`
-}
-
-type WatchedFile struct {
-	Id       string
-	FilePath string
-	Tail     *tail.Tail
-}
-
-func (w *WatchedFile) GetInfo() WatchInfo {
-	return WatchInfo{
-		Id:       w.Id,
-		FilePath: w.FilePath,
-		FileName: filepath.Base(w.FilePath),
-	}
-}
-
-// App struct
+// App is the Wails-bound struct — thin IPC surface only.
 type App struct {
-	ctx          context.Context
-	watchedFiles []WatchedFile
+	ctx     context.Context
+	store   *store.Store
+	watcher *watcher.Watcher
 }
 
-// NewApp creates a new App application struct
-func NewApp() *App {
-	return &App{}
+func NewApp(s *store.Store, w *watcher.Watcher) *App {
+	return &App{store: s, watcher: w}
 }
 
-// startup is called when the app starts. The context is saved
-// so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 }
 
-func (a *App) SelectFile() (WatchInfo, error) {
-	// Open file selection dialog
-
-	watched := WatchedFile{
-		Id: uuid.New().String(),
-	}
-
-	file, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-		Title: "Select File to Tail",
+// OpenFileDialog shows a native file picker and returns the selected path(s).
+func (a *App) OpenFileDialog() []string {
+	files, err := runtime.OpenMultipleFilesDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Open Log File(s)",
+		Filters: []runtime.FileFilter{
+			{DisplayName: "Log files (*.log, *.clef, *.json, *.ndjson)", Pattern: "*.log;*.clef;*.json;*.ndjson"},
+			{DisplayName: "All files (*.*)", Pattern: "*.*"},
+		},
 	})
-	watched.FilePath = file
+	if err != nil || len(files) == 0 {
+		return nil
+	}
+	return files
+}
 
+// LoadFile parses a file into the store and starts watching it.
+func (a *App) LoadFile(path string) (store.FileMetadata, error) {
+	meta, err := a.store.LoadFile(path)
 	if err != nil {
-		return watched.GetInfo(), err
+		return store.FileMetadata{}, err
 	}
-
-	go startTailing(&watched, a.ctx)
-	return watched.GetInfo(), nil
+	// Best-effort watch; ignore error (e.g. file removed immediately)
+	a.watcher.WatchFile(meta.FileID, path) //nolint:errcheck
+	return meta, nil
 }
 
-// StartTailing begins tailing the selected file
-func startTailing(watched *WatchedFile, ctx context.Context) {
-	t, err := tail.TailFile(watched.FilePath, tail.Config{
-		Follow: true,
-		Poll:   true,
-	})
-	defer t.Stop()
-	if err != nil {
-		runtime.EventsEmit(ctx, "tail-error", err.Error())
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			runtime.EventsEmit(ctx, "tail-stopped", watched.Id) //Verify that viewing has stopped
-			return
-		case line := <-t.Lines:
-			if line.Err == nil {
-				runtime.EventsEmit(ctx, "read-error", watched.Id) //Show toast that reading for file had error
-			}
-			fmt.Println("Read new line")
-			runtime.EventsEmit(ctx, "file-update", FileUpdate{
-				Id:   watched.Id,
-				Line: line.Text,
-			})
-		}
-	}
+// CloseFile stops watching and removes a file from the store.
+func (a *App) CloseFile(fileID string) {
+	a.watcher.StopWatch(fileID)
+	a.store.RemoveFile(fileID)
 }
 
-// StopTailing stops the current file tailing operation
-func (a *App) StopTailing(id string) {
-	a.watchedFiles = removeByIdAndStop(a.watchedFiles, id)
-}
-
-func removeByIdAndStop(slice []WatchedFile, id string) []WatchedFile {
-	for i, item := range slice {
-		if item.Id == id {
-			item.Tail.Stop()
-			slice[i] = slice[len(slice)-1]
-			return slice[:len(slice)-1]
-		}
-	}
-	return slice
+// GetPropValues returns distinct values for a property key in a file.
+func (a *App) GetPropValues(fileID, key string) []string {
+	return a.store.GetPropValues(fileID, key)
 }
