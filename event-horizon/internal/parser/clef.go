@@ -45,6 +45,8 @@ func (CLEFParser) ParseLine(line string) (ParsedLine, bool) {
 		if json.Unmarshal(v, &lvl) == nil {
 			pl.Level = normalizeLevel(lvl)
 		}
+	} else {
+		pl.Level = uint8(Information)
 	}
 
 	if v, ok := raw["@m"]; ok {
