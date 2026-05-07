@@ -1,3 +1,4 @@
+import { ScanEye } from 'lucide-react'
 import { formatTs } from '../lib/clef'
 import LevelBadge from './LevelBadge'
 import type { Entry } from '../hooks/useEntryStream'
@@ -7,9 +8,10 @@ interface Props {
   position: 'right' | 'bottom'
   onClose: () => void
   onTogglePosition: () => void
+  onScrollToSelected: () => void
 }
 
-export default function DetailPanel({ entry, position, onClose, onTogglePosition }: Props) {
+export default function DetailPanel({ entry, position, onClose, onTogglePosition, onScrollToSelected }: Props) {
   const propEntries = Object.entries(entry.props ?? {})
   const tsStr = formatTs(entry.ts)
 
@@ -25,6 +27,13 @@ export default function DetailPanel({ entry, position, onClose, onTogglePosition
         <LevelBadge level={entry.lvl} />
         <span className="text-[11px] text-[#737c8a] tabular-nums">{tsStr}</span>
         <div className="flex-1" />
+        <button
+          onClick={onScrollToSelected}
+          className="text-gray-600 hover:text-gray-400 cursor-pointer bg-transparent border-none p-1 flex items-center"
+          title="Jump to selected line"
+        >
+          <ScanEye size={14} />
+        </button>
         <button
           onClick={onTogglePosition}
           className="text-gray-600 hover:text-gray-400 cursor-pointer bg-transparent border-none p-1 flex items-center"
